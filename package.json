@@ -1,0 +1,34 @@
+{
+  "name": "web-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "web": "./dist/index.esm.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node ./__tests__/vf-common.test.js",
+    "build:dev": "cross-env NODE_ENV=development rollup  -c ./config/rollup.config.js",
+    "build": "cross-env NODE_ENV=production rollup  -c ./config/rollup.config.js",
+    "start": "cross-env NODE_ENV=development rollup -w -c ./config/rollup.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
+    "@types/commander": "^2.12.2"
+  },
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "commander": "^12.1.0",
+    "cross-env": "^7.0.3",
+    "download-git-repo": "^3.0.2",
+    "inquirer": "^10.1.8",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-typescript2": "^0.36.0"
+  }
+}
