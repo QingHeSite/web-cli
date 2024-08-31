@@ -58946,12 +58946,11 @@ var questions = [
         message: 'What is your name?',
     },
 ];
-inquirer
-    .prompt(questions)
+inquirer.prompt(questions)
     .then(function (answers) {
     // Use user feedback for... whatever!!
     console.log('answers', answers);
-    download$1('QingHeSite/docqinghe', 'dir/a', {}, function (err) {
+    download$1('QingHeSite/browser-custom', 'browser', {}, function (err) {
         console.log('download', err);
     });
 })

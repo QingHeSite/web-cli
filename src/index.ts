@@ -23,12 +23,11 @@ const questions: any = [
     message: 'What is your name?',
   },
 ]
-inquirer
-  .prompt(questions)
+inquirer.prompt(questions)
   .then((answers) => {
     // Use user feedback for... whatever!!
     console.log('answers', answers);
-    download('QingHeSite/docqinghe', 'dir/a',{}, (err: any) => {
+    download('QingHeSite/browser-custom', 'browser',{}, (err: any) => {
       console.log('download', err);
       
     })
