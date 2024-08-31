@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { program } from "commander";
 import inquirer from 'inquirer';
+import download from 'download-git-repo'
 
 interface MyAnswers {
   name: string;
@@ -27,6 +28,10 @@ inquirer
   .then((answers) => {
     // Use user feedback for... whatever!!
     console.log('answers', answers);
+    download('QingHeSite/docqinghe', 'dir/a',{}, (err: any) => {
+      console.log('download', err);
+      
+    })
 
   })
   .catch((error) => {

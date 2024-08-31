@@ -1,7 +1,7 @@
 import resolve from '@rollup/plugin-node-resolve'
 import path from 'node:path'
 import typescript from "rollup-plugin-typescript2";
-import babel from "rollup-plugin-babel";
+import babel from "@rollup/plugin-babel";
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import  terser from '@rollup/plugin-terser';
@@ -23,9 +23,11 @@ const config = {
     }
   ],
   plugins: [typescript(), babel({
+    babelHelpers: 'bundled',
     // 过滤文件
     exclude: "node_modules/**",
-  }), resolve(), commonjs(), json()],
+  }), resolve({preferBuiltins: true,}), commonjs(), json()],
+  external: ['electron'],
 }
 if (env === 'production') {
   config.plugins.push(terser({
