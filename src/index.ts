@@ -2,8 +2,18 @@
 import { program } from "commander";
 import download from 'download-git-repo'
 import { input } from '@inquirer/prompts';
-import "tslib";
+import ora from "ora";
+import chalk from 'chalk'
 
+const log = console.log;
+log(chalk.blue('Hello') + ' World' + chalk.red('!'));
+
+const spinner = ora('Loading unicorns').start();
+
+// setTimeout(() => {
+// 	spinner.color = 'yellow';
+// 	spinner.text = 'Loading rainbows';
+// }, 1000);
 
 interface MyAnswers {
   name: string;
@@ -20,9 +30,9 @@ program
 const dirName = await input({ message: 'Enter your dirName', required: true });
 console.log('dirName', dirName);
 
-download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
-  console.log('download', err);
-})
+// download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
+//   console.log('download', err);
+// })
 
 
 // inquirer.prompt(questions)
