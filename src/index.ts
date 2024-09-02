@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import inquirer from 'inquirer';
 import download from 'download-git-repo'
+import { input } from '@inquirer/prompts';
+import "tslib";
+
 
 interface MyAnswers {
   name: string;
@@ -15,33 +17,33 @@ program
 
 // program.version('0.0.2');
 
+const dirName = await input({ message: 'Enter your dirName', required: true });
+console.log('dirName', dirName);
 
-const questions: any = [
-  {
-    type: 'input',
-    name: 'name',
-    message: 'What is your name?',
-  },
-]
-inquirer.prompt(questions)
-  .then((answers) => {
-    // Use user feedback for... whatever!!
-    console.log('answers', answers);
-    download('QingHeSite/browser-custom', 'browser',{}, (err: any) => {
-      console.log('download', err);
+download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
+  console.log('download', err);
+})
+
+
+// inquirer.prompt(questions)
+//   .then((answers) => {
+//     // Use user feedback for... whatever!!
+//     console.log('answers', answers);
+//     download('QingHeSite/browser-custom', 'browser',{}, (err: any) => {
+//       console.log('download', err);
       
-    })
+//     })
 
-  })
-  .catch((error) => {
-    console.log('error', error);
+//   })
+//   .catch((error) => {
+//     console.log('error', error);
 
-    if (error.isTtyError) {
-      // Prompt couldn't be rendered in the current environment
-    } else {
-      // Something else went wrong
-    }
-  });
+//     if (error.isTtyError) {
+//       // Prompt couldn't be rendered in the current environment
+//     } else {
+//       // Something else went wrong
+//     }
+//   });
 // program.command('create <name>').action(name => {
 //   // 获取一些项目信息
 //   inquirer.prompt([

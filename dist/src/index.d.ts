@@ -1,3 +1,3 @@
 #!/usr/bin/env node
-export {};
+import "tslib";
 //# sourceMappingURL=index.d.ts.map
