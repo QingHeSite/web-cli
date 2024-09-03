@@ -33,7 +33,7 @@ const config = {
     babelHelpers: 'bundled',
     // 过滤文件
     exclude: "node_modules/**",
-  }), resolve({preferBuiltins: true,}), commonjs(), json()],
+  }),commonjs(), resolve({preferBuiltins: true,}), json()],
   external: ['electron'],
 }
 if (env === 'production') {

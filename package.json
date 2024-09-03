@@ -37,7 +37,7 @@
     "download-git-repo": "^3.0.2",
     "electron": "^32.0.1",
     "inquirer": "^10.1.8",
-    "ora": "^8.1.0",
+    "ora": "^5.4.1",
     "rollup-plugin-typescript2": "^0.36.0"
   }
 }
