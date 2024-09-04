@@ -3,13 +3,20 @@ import require$$0$1 from 'node:events';
 import require$$1 from 'node:child_process';
 import require$$2 from 'node:path';
 import require$$3 from 'node:fs';
-import process$3 from 'node:process';
+import process$4 from 'node:process';
+import require$$0$8 from 'readline';
 import require$$0$4 from 'os';
 import require$$0$3 from 'tty';
-import * as readline$1 from 'node:readline';
-import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
+import require$$0$5 from 'assert';
+import require$$2$1 from 'events';
 import require$$1$1 from 'stream';
+import require$$0$6 from 'buffer';
+import require$$0$7 from 'util';
+import * as readline$2 from 'node:readline';
+import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
 import require$$0$2 from 'node:tty';
+
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -1178,7 +1185,7 @@ const EventEmitter = require$$0$1.EventEmitter;
 const childProcess = require$$1;
 const path = require$$2;
 const fs = require$$3;
-const process$2 = process$3;
+const process$3 = process$4;
 
 const { Argument: Argument$2, humanReadableArgName } = argument;
 const { CommanderError: CommanderError$2 } = error;
@@ -1234,12 +1241,12 @@ let Command$2 = class Command extends EventEmitter {
 
     // see .configureOutput() for docs
     this._outputConfiguration = {
-      writeOut: (str) => process$2.stdout.write(str),
-      writeErr: (str) => process$2.stderr.write(str),
+      writeOut: (str) => process$3.stdout.write(str),
+      writeErr: (str) => process$3.stderr.write(str),
       getOutHelpWidth: () =>
-        process$2.stdout.isTTY ? process$2.stdout.columns : undefined,
+        process$3.stdout.isTTY ? process$3.stdout.columns : undefined,
       getErrHelpWidth: () =>
-        process$2.stderr.isTTY ? process$2.stderr.columns : undefined,
+        process$3.stderr.isTTY ? process$3.stderr.columns : undefined,
       outputError: (str, write) => write(str),
     };
 
@@ -1683,7 +1690,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
       this._exitCallback(new CommanderError$2(exitCode, code, message));
       // Expecting this line is not reached.
     }
-    process$2.exit(exitCode);
+    process$3.exit(exitCode);
   }
 
   /**
@@ -2152,11 +2159,11 @@ Expecting one of '${allowedValues.join("', '")}'`);
 
     // auto-detect argument conventions if nothing supplied
     if (argv === undefined && parseOptions.from === undefined) {
-      if (process$2.versions?.electron) {
+      if (process$3.versions?.electron) {
         parseOptions.from = 'electron';
       }
       // check node specific options for scenarios where user CLI args follow executable without scriptname
-      const execArgv = process$2.execArgv ?? [];
+      const execArgv = process$3.execArgv ?? [];
       if (
         execArgv.includes('-e') ||
         execArgv.includes('--eval') ||
@@ -2169,7 +2176,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
 
     // default to using process.argv
     if (argv === undefined) {
-      argv = process$2.argv;
+      argv = process$3.argv;
     }
     this.rawArgs = argv.slice();
 
@@ -2183,7 +2190,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         break;
       case 'electron':
         // @ts-ignore: because defaultApp is an unknown property
-        if (process$2.defaultApp) {
+        if (process$3.defaultApp) {
           this._scriptPath = argv[1];
           userArgs = argv.slice(2);
         } else {
@@ -2340,28 +2347,28 @@ Expecting one of '${allowedValues.join("', '")}'`);
     launchWithNode = sourceExt.includes(path.extname(executableFile));
 
     let proc;
-    if (process$2.platform !== 'win32') {
+    if (process$3.platform !== 'win32') {
       if (launchWithNode) {
         args.unshift(executableFile);
         // add executable arguments to spawn
-        args = incrementNodeInspectorPort(process$2.execArgv).concat(args);
+        args = incrementNodeInspectorPort(process$3.execArgv).concat(args);
 
-        proc = childProcess.spawn(process$2.argv[0], args, { stdio: 'inherit' });
+        proc = childProcess.spawn(process$3.argv[0], args, { stdio: 'inherit' });
       } else {
         proc = childProcess.spawn(executableFile, args, { stdio: 'inherit' });
       }
     } else {
       args.unshift(executableFile);
       // add executable arguments to spawn
-      args = incrementNodeInspectorPort(process$2.execArgv).concat(args);
-      proc = childProcess.spawn(process$2.execPath, args, { stdio: 'inherit' });
+      args = incrementNodeInspectorPort(process$3.execArgv).concat(args);
+      proc = childProcess.spawn(process$3.execPath, args, { stdio: 'inherit' });
     }
 
     if (!proc.killed) {
       // testing mainly to avoid leak warnings during unit tests with mocked spawn
       const signals = ['SIGUSR1', 'SIGUSR2', 'SIGTERM', 'SIGINT', 'SIGHUP'];
       signals.forEach((signal) => {
-        process$2.on(signal, () => {
+        process$3.on(signal, () => {
           if (proc.killed === false && proc.exitCode === null) {
             // @ts-ignore because signals not typed to known strings
             proc.kill(signal);
@@ -2375,7 +2382,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
     proc.on('close', (code) => {
       code = code ?? 1; // code is null if spawned process terminated due to a signal
       if (!exitCallback) {
-        process$2.exit(code);
+        process$3.exit(code);
       } else {
         exitCallback(
           new CommanderError$2(
@@ -2402,7 +2409,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         throw new Error(`'${executableFile}' not executable`);
       }
       if (!exitCallback) {
-        process$2.exit(1);
+        process$3.exit(1);
       } else {
         const wrappedError = new CommanderError$2(
           1,
@@ -3013,7 +3020,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
    */
   _parseOptionsEnv() {
     this.options.forEach((option) => {
-      if (option.envVar && option.envVar in process$2.env) {
+      if (option.envVar && option.envVar in process$3.env) {
         const optionKey = option.attributeName();
         // Priority check. Do not overwrite cli or options from unknown source (client-code).
         if (
@@ -3025,7 +3032,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
           if (option.required || option.optional) {
             // option can take a value
             // keep very simple, optional always takes value
-            this.emit(`optionEnv:${option.name()}`, process$2.env[option.envVar]);
+            this.emit(`optionEnv:${option.name()}`, process$3.env[option.envVar]);
           } else {
             // boolean
             // keep very simple, only care that envVar defined and not the value
@@ -3566,7 +3573,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
 
   help(contextOptions) {
     this.outputHelp(contextOptions);
-    let exitCode = process$2.exitCode || 0;
+    let exitCode = process$3.exitCode || 0;
     if (
       exitCode === 0 &&
       contextOptions &&
@@ -3774,7 +3781,7 @@ function getStore() {
     }
     return store;
 }
-function readline() {
+function readline$1() {
     return getStore().rl;
 }
 // Merge state updates happening within the callback function to avoid multiple renders.
@@ -3820,7 +3827,7 @@ const effectScheduler = {
         const { index } = store;
         store.hooksEffect.push(() => {
             store.hooksCleanup[index]?.();
-            const cleanFn = cb(readline());
+            const cleanFn = cb(readline$1());
             if (cleanFn != null && typeof cleanFn !== 'function') {
                 throw new ValidationError('useEffect return value must be a cleanup function or nothing.');
             }
@@ -5695,9 +5702,9 @@ Object.defineProperty(spinners, 'random', {
 	}
 });
 
-var cliSpinners = spinners;
+var cliSpinners$1 = spinners;
 
-var spinners$1 = /*@__PURE__*/getDefaultExportFromCjs(cliSpinners);
+var cliSpinners$1 = /*@__PURE__*/getDefaultExportFromCjs(cliSpinners);
 
 const defaultTheme = {
     prefix: colors$1.green('?'),
@@ -5862,7 +5869,7 @@ var ansiRegex$1 = ({onlyFirst = false} = {}) => {
 
 const ansiRegex = ansiRegex$1;
 
-var stripAnsi$2 = string => typeof string === 'string' ? string.replace(ansiRegex(), '') : string;
+var stripAnsi$3 = string => typeof string === 'string' ? string.replace(ansiRegex$1(), '') : string;
 
 var stripAnsi$3 = /*@__PURE__*/getDefaultExportFromCjs(stripAnsi$2);
 
@@ -7349,9 +7356,9 @@ ansiStyles$2.exports;
 
 var ansiStylesExports = ansiStyles$2.exports;
 
-const stringWidth = stringWidthExports;
-const stripAnsi = stripAnsi$2;
-const ansiStyles$1 = ansiStylesExports;
+const stringWidth$1 = stringWidthExports;
+const stripAnsi$1 = stripAnsi$3;
+const ansiStyles$2 = ansiStylesExports;
 
 const ESCAPES = new Set([
 	'\u001B',
@@ -7372,7 +7379,7 @@ const wrapWord = (rows, word, columns) => {
 	const characters = [...word];
 
 	let isInsideEscape = false;
-	let visible = stringWidth(stripAnsi(rows[rows.length - 1]));
+	let visible = stringWidth$1(stripAnsi$1(rows[rows.length - 1]));
 
 	for (const [index, character] of characters.entries()) {
 		const characterLength = stringWidth(character);
@@ -7557,7 +7564,7 @@ function breakLines(content, width) {
  * @returns {number}
  */
 function readlineWidth() {
-    return cliWidth$1({ defaultWidth: 80, output: readline().output });
+    return cliWidth$1({ defaultWidth: 80, output: readline$1().output });
 }
 
 class CancelablePromise extends Promise {
@@ -7735,24 +7742,24 @@ var MuteStream$1 = /*@__PURE__*/getDefaultExportFromCjs(lib);
  * state from which it is not safe to try and enter JS
  * listeners.
  */
-const signals = [];
-signals.push('SIGHUP', 'SIGINT', 'SIGTERM');
+const signals$2 = [];
+signals$2.push('SIGHUP', 'SIGINT', 'SIGTERM');
 if (process.platform !== 'win32') {
-    signals.push('SIGALRM', 'SIGABRT', 'SIGVTALRM', 'SIGXCPU', 'SIGXFSZ', 'SIGUSR2', 'SIGTRAP', 'SIGSYS', 'SIGQUIT', 'SIGIOT'
+    signals$2.push('SIGALRM', 'SIGABRT', 'SIGVTALRM', 'SIGXCPU', 'SIGXFSZ', 'SIGUSR2', 'SIGTRAP', 'SIGSYS', 'SIGQUIT', 'SIGIOT'
     // should detect profiler and enable/disable accordingly.
     // see #21
     // 'SIGPROF'
     );
 }
 if (process.platform === 'linux') {
-    signals.push('SIGIO', 'SIGPOLL', 'SIGPWR', 'SIGSTKFLT');
+    signals$2.push('SIGIO', 'SIGPOLL', 'SIGPWR', 'SIGSTKFLT');
 }
 
 // Note: since nyc uses this module to output coverage, any lines
 // that are in the direct sync flow of nyc's outputCoverage are
 // ignored, since we can never get coverage for them.
 // grab a reference to node's real process object right away
-const processOk = (process) => !!process &&
+const processOk$1 = (process) => !!process &&
     typeof process === 'object' &&
     typeof process.removeListener === 'function' &&
     typeof process.emit === 'function' &&
@@ -7762,7 +7769,7 @@ const processOk = (process) => !!process &&
     typeof process.pid === 'number' &&
     typeof process.on === 'function';
 const kExitEmitter = Symbol.for('signal-exit emitter');
-const global = globalThis;
+const global$1 = globalThis;
 const ObjectDefineProperty = Object.defineProperty.bind(Object);
 // teeny special purpose ee
 class Emitter {
@@ -7777,10 +7784,10 @@ class Emitter {
     count = 0;
     id = Math.random();
     constructor() {
-        if (global[kExitEmitter]) {
-            return global[kExitEmitter];
+        if (global$1[kExitEmitter]) {
+            return global$1[kExitEmitter];
         }
-        ObjectDefineProperty(global, kExitEmitter, {
+        ObjectDefineProperty(global$1, kExitEmitter, {
             value: this,
             writable: false,
             enumerable: false,
@@ -7846,7 +7853,7 @@ class SignalExit extends SignalExitBase {
     // "SIGHUP" throws an `ENOSYS` error on Windows,
     // so use a supported signal instead
     /* c8 ignore start */
-    #hupSig = process$1.platform === 'win32' ? 'SIGINT' : 'SIGHUP';
+    #hupSig = process$2.platform === 'win32' ? 'SIGINT' : 'SIGHUP';
     /* c8 ignore stop */
     #emitter = new Emitter();
     #process;
@@ -7859,7 +7866,7 @@ class SignalExit extends SignalExitBase {
         this.#process = process;
         // { <signal>: <listener fn>, ... }
         this.#sigListeners = {};
-        for (const sig of signals) {
+        for (const sig of signals$2) {
             this.#sigListeners[sig] = () => {
                 // If there are no other listeners, an exit is coming!
                 // Simplest way: remove us and then re-send the signal.
@@ -7896,7 +7903,7 @@ class SignalExit extends SignalExitBase {
     }
     onExit(cb, opts) {
         /* c8 ignore start */
-        if (!processOk(this.#process)) {
+        if (!processOk$1(this.#process)) {
             return () => { };
         }
         /* c8 ignore stop */
@@ -7923,7 +7930,7 @@ class SignalExit extends SignalExitBase {
         // listeners on signals, and don't wait for the other one to
         // handle it instead of us.
         this.#emitter.count += 1;
-        for (const sig of signals) {
+        for (const sig of signals$2) {
             try {
                 const fn = this.#sigListeners[sig];
                 if (fn)
@@ -7943,7 +7950,7 @@ class SignalExit extends SignalExitBase {
             return;
         }
         this.#loaded = false;
-        signals.forEach(sig => {
+        signals$2.forEach(sig => {
             const listener = this.#sigListeners[sig];
             /* c8 ignore start */
             if (!listener) {
@@ -7963,7 +7970,7 @@ class SignalExit extends SignalExitBase {
     }
     #processReallyExit(code) {
         /* c8 ignore start */
-        if (!processOk(this.#process)) {
+        if (!processOk$1(this.#process)) {
             return 0;
         }
         this.#process.exitCode = code || 0;
@@ -7973,7 +7980,7 @@ class SignalExit extends SignalExitBase {
     }
     #processEmit(ev, ...args) {
         const og = this.#originalProcessEmit;
-        if (ev === 'exit' && processOk(this.#process)) {
+        if (ev === 'exit' && processOk$1(this.#process)) {
             if (typeof args[0] === 'number') {
                 this.#process.exitCode = args[0];
                 /* c8 ignore start */
@@ -7990,7 +7997,7 @@ class SignalExit extends SignalExitBase {
         }
     }
 }
-const process$1 = globalThis.process;
+const process$2 = globalThis.process;
 // wrap so that we call the method on the actual handler, without
 // exporting it directly.
 const { 
@@ -8011,7 +8018,7 @@ onExit,
  *
  * @internal
  */
-load, 
+load: load$1, 
 /**
  * Unload the listeners.  Likely you never need to call this, unless
  * doing a rather deep integration with signal-exit functionality.
@@ -8019,7 +8026,7 @@ load,
  *
  * @internal
  */
-unload, } = signalExitWrap(processOk(process$1) ? new SignalExit(process$1) : new SignalExitFallback());
+unload: unload$1, } = signalExitWrap(processOk$1(process$2) ? new SignalExit(process$2) : new SignalExitFallback());
 
 var ansiEscapes$1 = {exports: {}};
 
@@ -8275,7 +8282,7 @@ function createPrompt(view) {
         // Add mute capabilities to the output
         const output = new MuteStream$1();
         output.pipe(context?.output ?? process.stdout);
-        const rl = readline$1.createInterface({
+        const rl = readline$2.createInterface({
             terminal: true,
             input,
             output,
@@ -8416,6 +8423,1581 @@ var input = createPrompt((config, done) => {
         error,
     ];
 });
+
+const ANSI_BACKGROUND_OFFSET = 10;
+
+const wrapAnsi16 = (offset = 0) => code => `\u001B[${code + offset}m`;
+
+const wrapAnsi256 = (offset = 0) => code => `\u001B[${38 + offset};5;${code}m`;
+
+const wrapAnsi16m = (offset = 0) => (red, green, blue) => `\u001B[${38 + offset};2;${red};${green};${blue}m`;
+
+const styles$2 = {
+	modifier: {
+		reset: [0, 0],
+		// 21 isn't widely supported and 22 does the same thing
+		bold: [1, 22],
+		dim: [2, 22],
+		italic: [3, 23],
+		underline: [4, 24],
+		overline: [53, 55],
+		inverse: [7, 27],
+		hidden: [8, 28],
+		strikethrough: [9, 29],
+	},
+	color: {
+		black: [30, 39],
+		red: [31, 39],
+		green: [32, 39],
+		yellow: [33, 39],
+		blue: [34, 39],
+		magenta: [35, 39],
+		cyan: [36, 39],
+		white: [37, 39],
+
+		// Bright color
+		blackBright: [90, 39],
+		gray: [90, 39], // Alias of `blackBright`
+		grey: [90, 39], // Alias of `blackBright`
+		redBright: [91, 39],
+		greenBright: [92, 39],
+		yellowBright: [93, 39],
+		blueBright: [94, 39],
+		magentaBright: [95, 39],
+		cyanBright: [96, 39],
+		whiteBright: [97, 39],
+	},
+	bgColor: {
+		bgBlack: [40, 49],
+		bgRed: [41, 49],
+		bgGreen: [42, 49],
+		bgYellow: [43, 49],
+		bgBlue: [44, 49],
+		bgMagenta: [45, 49],
+		bgCyan: [46, 49],
+		bgWhite: [47, 49],
+
+		// Bright color
+		bgBlackBright: [100, 49],
+		bgGray: [100, 49], // Alias of `bgBlackBright`
+		bgGrey: [100, 49], // Alias of `bgBlackBright`
+		bgRedBright: [101, 49],
+		bgGreenBright: [102, 49],
+		bgYellowBright: [103, 49],
+		bgBlueBright: [104, 49],
+		bgMagentaBright: [105, 49],
+		bgCyanBright: [106, 49],
+		bgWhiteBright: [107, 49],
+	},
+};
+
+Object.keys(styles$2.modifier);
+const foregroundColorNames = Object.keys(styles$2.color);
+const backgroundColorNames = Object.keys(styles$2.bgColor);
+[...foregroundColorNames, ...backgroundColorNames];
+
+function assembleStyles() {
+	const codes = new Map();
+
+	for (const [groupName, group] of Object.entries(styles$2)) {
+		for (const [styleName, style] of Object.entries(group)) {
+			styles$2[styleName] = {
+				open: `\u001B[${style[0]}m`,
+				close: `\u001B[${style[1]}m`,
+			};
+
+			group[styleName] = styles$2[styleName];
+
+			codes.set(style[0], style[1]);
+		}
+
+		Object.defineProperty(styles$2, groupName, {
+			value: group,
+			enumerable: false,
+		});
+	}
+
+	Object.defineProperty(styles$2, 'codes', {
+		value: codes,
+		enumerable: false,
+	});
+
+	styles$2.color.close = '\u001B[39m';
+	styles$2.bgColor.close = '\u001B[49m';
+
+	styles$2.color.ansi = wrapAnsi16();
+	styles$2.color.ansi256 = wrapAnsi256();
+	styles$2.color.ansi16m = wrapAnsi16m();
+	styles$2.bgColor.ansi = wrapAnsi16(ANSI_BACKGROUND_OFFSET);
+	styles$2.bgColor.ansi256 = wrapAnsi256(ANSI_BACKGROUND_OFFSET);
+	styles$2.bgColor.ansi16m = wrapAnsi16m(ANSI_BACKGROUND_OFFSET);
+
+	// From https://github.com/Qix-/color-convert/blob/3f0e0d4e92e235796ccb17f6e85c72094a651f49/conversions.js
+	Object.defineProperties(styles$2, {
+		rgbToAnsi256: {
+			value(red, green, blue) {
+				// We use the extended greyscale palette here, with the exception of
+				// black and white. normal palette only has 4 greyscale shades.
+				if (red === green && green === blue) {
+					if (red < 8) {
+						return 16;
+					}
+
+					if (red > 248) {
+						return 231;
+					}
+
+					return Math.round(((red - 8) / 247) * 24) + 232;
+				}
+
+				return 16
+					+ (36 * Math.round(red / 255 * 5))
+					+ (6 * Math.round(green / 255 * 5))
+					+ Math.round(blue / 255 * 5);
+			},
+			enumerable: false,
+		},
+		hexToRgb: {
+			value(hex) {
+				const matches = /[a-f\d]{6}|[a-f\d]{3}/i.exec(hex.toString(16));
+				if (!matches) {
+					return [0, 0, 0];
+				}
+
+				let [colorString] = matches;
+
+				if (colorString.length === 3) {
+					colorString = [...colorString].map(character => character + character).join('');
+				}
+
+				const integer = Number.parseInt(colorString, 16);
+
+				return [
+					/* eslint-disable no-bitwise */
+					(integer >> 16) & 0xFF,
+					(integer >> 8) & 0xFF,
+					integer & 0xFF,
+					/* eslint-enable no-bitwise */
+				];
+			},
+			enumerable: false,
+		},
+		hexToAnsi256: {
+			value: hex => styles$2.rgbToAnsi256(...styles$2.hexToRgb(hex)),
+			enumerable: false,
+		},
+		ansi256ToAnsi: {
+			value(code) {
+				if (code < 8) {
+					return 30 + code;
+				}
+
+				if (code < 16) {
+					return 90 + (code - 8);
+				}
+
+				let red;
+				let green;
+				let blue;
+
+				if (code >= 232) {
+					red = (((code - 232) * 10) + 8) / 255;
+					green = red;
+					blue = red;
+				} else {
+					code -= 16;
+
+					const remainder = code % 36;
+
+					red = Math.floor(code / 36) / 5;
+					green = Math.floor(remainder / 6) / 5;
+					blue = (remainder % 6) / 5;
+				}
+
+				const value = Math.max(red, green, blue) * 2;
+
+				if (value === 0) {
+					return 30;
+				}
+
+				// eslint-disable-next-line no-bitwise
+				let result = 30 + ((Math.round(blue) << 2) | (Math.round(green) << 1) | Math.round(red));
+
+				if (value === 2) {
+					result += 60;
+				}
+
+				return result;
+			},
+			enumerable: false,
+		},
+		rgbToAnsi: {
+			value: (red, green, blue) => styles$2.ansi256ToAnsi(styles$2.rgbToAnsi256(red, green, blue)),
+			enumerable: false,
+		},
+		hexToAnsi: {
+			value: hex => styles$2.ansi256ToAnsi(styles$2.hexToAnsi256(hex)),
+			enumerable: false,
+		},
+	});
+
+	return styles$2;
+}
+
+const ansiStyles$1 = assembleStyles();
+
+/* eslint-env browser */
+
+const level = (() => {
+	if (navigator.userAgentData) {
+		const brand = navigator.userAgentData.brands.find(({brand}) => brand === 'Chromium');
+		if (brand && brand.version > 93) {
+			return 3;
+		}
+	}
+
+	if (/\b(Chrome|Chromium)\//.test(navigator.userAgent)) {
+		return 1;
+	}
+
+	return 0;
+})();
+
+const colorSupport = level !== 0 && {
+	level,
+	hasBasic: true,
+	has256: level >= 2,
+	has16m: level >= 3,
+};
+
+const supportsColor$1 = {
+	stdout: colorSupport,
+	stderr: colorSupport,
+};
+
+// TODO: When targeting Node.js 16, use `String.prototype.replaceAll`.
+function stringReplaceAll$2(string, substring, replacer) {
+	let index = string.indexOf(substring);
+	if (index === -1) {
+		return string;
+	}
+
+	const substringLength = substring.length;
+	let endIndex = 0;
+	let returnValue = '';
+	do {
+		returnValue += string.slice(endIndex, index) + substring + replacer;
+		endIndex = index + substringLength;
+		index = string.indexOf(substring, endIndex);
+	} while (index !== -1);
+
+	returnValue += string.slice(endIndex);
+	return returnValue;
+}
+
+function stringEncaseCRLFWithFirstIndex$2(string, prefix, postfix, index) {
+	let endIndex = 0;
+	let returnValue = '';
+	do {
+		const gotCR = string[index - 1] === '\r';
+		returnValue += string.slice(endIndex, (gotCR ? index - 1 : index)) + prefix + (gotCR ? '\r\n' : '\n') + postfix;
+		endIndex = index + 1;
+		index = string.indexOf('\n', endIndex);
+	} while (index !== -1);
+
+	returnValue += string.slice(endIndex);
+	return returnValue;
+}
+
+const {stdout: stdoutColor$1, stderr: stderrColor$1} = supportsColor$1;
+
+const GENERATOR = Symbol('GENERATOR');
+const STYLER = Symbol('STYLER');
+const IS_EMPTY = Symbol('IS_EMPTY');
+
+// `supportsColor.level` → `ansiStyles.color[name]` mapping
+const levelMapping$1 = [
+	'ansi',
+	'ansi',
+	'ansi256',
+	'ansi16m',
+];
+
+const styles$1 = Object.create(null);
+
+const applyOptions$1 = (object, options = {}) => {
+	if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
+		throw new Error('The `level` option should be an integer from 0 to 3');
+	}
+
+	// Detect level if not set manually
+	const colorLevel = stdoutColor$1 ? stdoutColor$1.level : 0;
+	object.level = options.level === undefined ? colorLevel : options.level;
+};
+
+const chalkFactory$1 = options => {
+	const chalk = (...strings) => strings.join(' ');
+	applyOptions$1(chalk, options);
+
+	Object.setPrototypeOf(chalk, createChalk.prototype);
+
+	return chalk;
+};
+
+function createChalk(options) {
+	return chalkFactory$1(options);
+}
+
+Object.setPrototypeOf(createChalk.prototype, Function.prototype);
+
+for (const [styleName, style] of Object.entries(ansiStyles$1)) {
+	styles$1[styleName] = {
+		get() {
+			const builder = createBuilder$1(this, createStyler$1(style.open, style.close, this[STYLER]), this[IS_EMPTY]);
+			Object.defineProperty(this, styleName, {value: builder});
+			return builder;
+		},
+	};
+}
+
+styles$1.visible = {
+	get() {
+		const builder = createBuilder$1(this, this[STYLER], true);
+		Object.defineProperty(this, 'visible', {value: builder});
+		return builder;
+	},
+};
+
+const getModelAnsi = (model, level, type, ...arguments_) => {
+	if (model === 'rgb') {
+		if (level === 'ansi16m') {
+			return ansiStyles$1[type].ansi16m(...arguments_);
+		}
+
+		if (level === 'ansi256') {
+			return ansiStyles$1[type].ansi256(ansiStyles$1.rgbToAnsi256(...arguments_));
+		}
+
+		return ansiStyles$1[type].ansi(ansiStyles$1.rgbToAnsi(...arguments_));
+	}
+
+	if (model === 'hex') {
+		return getModelAnsi('rgb', level, type, ...ansiStyles$1.hexToRgb(...arguments_));
+	}
+
+	return ansiStyles$1[type][model](...arguments_);
+};
+
+const usedModels$1 = ['rgb', 'hex', 'ansi256'];
+
+for (const model of usedModels$1) {
+	styles$1[model] = {
+		get() {
+			const {level} = this;
+			return function (...arguments_) {
+				const styler = createStyler$1(getModelAnsi(model, levelMapping$1[level], 'color', ...arguments_), ansiStyles$1.color.close, this[STYLER]);
+				return createBuilder$1(this, styler, this[IS_EMPTY]);
+			};
+		},
+	};
+
+	const bgModel = 'bg' + model[0].toUpperCase() + model.slice(1);
+	styles$1[bgModel] = {
+		get() {
+			const {level} = this;
+			return function (...arguments_) {
+				const styler = createStyler$1(getModelAnsi(model, levelMapping$1[level], 'bgColor', ...arguments_), ansiStyles$1.bgColor.close, this[STYLER]);
+				return createBuilder$1(this, styler, this[IS_EMPTY]);
+			};
+		},
+	};
+}
+
+const proto$1 = Object.defineProperties(() => {}, {
+	...styles$1,
+	level: {
+		enumerable: true,
+		get() {
+			return this[GENERATOR].level;
+		},
+		set(level) {
+			this[GENERATOR].level = level;
+		},
+	},
+});
+
+const createStyler$1 = (open, close, parent) => {
+	let openAll;
+	let closeAll;
+	if (parent === undefined) {
+		openAll = open;
+		closeAll = close;
+	} else {
+		openAll = parent.openAll + open;
+		closeAll = close + parent.closeAll;
+	}
+
+	return {
+		open,
+		close,
+		openAll,
+		closeAll,
+		parent,
+	};
+};
+
+const createBuilder$1 = (self, _styler, _isEmpty) => {
+	// Single argument is hot path, implicit coercion is faster than anything
+	// eslint-disable-next-line no-implicit-coercion
+	const builder = (...arguments_) => applyStyle$1(builder, (arguments_.length === 1) ? ('' + arguments_[0]) : arguments_.join(' '));
+
+	// We alter the prototype because we must return a function, but there is
+	// no way to create a function with a different prototype
+	Object.setPrototypeOf(builder, proto$1);
+
+	builder[GENERATOR] = self;
+	builder[STYLER] = _styler;
+	builder[IS_EMPTY] = _isEmpty;
+
+	return builder;
+};
+
+const applyStyle$1 = (self, string) => {
+	if (self.level <= 0 || !string) {
+		return self[IS_EMPTY] ? '' : string;
+	}
+
+	let styler = self[STYLER];
+
+	if (styler === undefined) {
+		return string;
+	}
+
+	const {openAll, closeAll} = styler;
+	if (string.includes('\u001B')) {
+		while (styler !== undefined) {
+			// Replace any instances already present with a re-opening code
+			// otherwise only the part of the string until said closing code
+			// will be colored, and the rest will simply be 'plain'.
+			string = stringReplaceAll$2(string, styler.close, styler.open);
+
+			styler = styler.parent;
+		}
+	}
+
+	// We can move both next actions out of loop, because remaining actions in loop won't have
+	// any/visible effect on parts we add here. Close the styling before a linebreak and reopen
+	// after next line to fix a bleed issue on macOS: https://github.com/chalk/chalk/pull/92
+	const lfIndex = string.indexOf('\n');
+	if (lfIndex !== -1) {
+		string = stringEncaseCRLFWithFirstIndex$2(string, closeAll, openAll, lfIndex);
+	}
+
+	return openAll + string + closeAll;
+};
+
+Object.defineProperties(createChalk.prototype, styles$1);
+
+const chalk$2 = createChalk();
+createChalk({level: stderrColor$1 ? stderrColor$1.level : 0});
+
+const copyProperty = (to, from, property, ignoreNonConfigurable) => {
+	// `Function#length` should reflect the parameters of `to` not `from` since we keep its body.
+	// `Function#prototype` is non-writable and non-configurable so can never be modified.
+	if (property === 'length' || property === 'prototype') {
+		return;
+	}
+
+	// `Function#arguments` and `Function#caller` should not be copied. They were reported to be present in `Reflect.ownKeys` for some devices in React Native (#41), so we explicitly ignore them here.
+	if (property === 'arguments' || property === 'caller') {
+		return;
+	}
+
+	const toDescriptor = Object.getOwnPropertyDescriptor(to, property);
+	const fromDescriptor = Object.getOwnPropertyDescriptor(from, property);
+
+	if (!canCopyProperty(toDescriptor, fromDescriptor) && ignoreNonConfigurable) {
+		return;
+	}
+
+	Object.defineProperty(to, property, fromDescriptor);
+};
+
+// `Object.defineProperty()` throws if the property exists, is not configurable and either:
+// - one its descriptors is changed
+// - it is non-writable and its value is changed
+const canCopyProperty = function (toDescriptor, fromDescriptor) {
+	return toDescriptor === undefined || toDescriptor.configurable || (
+		toDescriptor.writable === fromDescriptor.writable
+		&& toDescriptor.enumerable === fromDescriptor.enumerable
+		&& toDescriptor.configurable === fromDescriptor.configurable
+		&& (toDescriptor.writable || toDescriptor.value === fromDescriptor.value)
+	);
+};
+
+const changePrototype = (to, from) => {
+	const fromPrototype = Object.getPrototypeOf(from);
+	if (fromPrototype === Object.getPrototypeOf(to)) {
+		return;
+	}
+
+	Object.setPrototypeOf(to, fromPrototype);
+};
+
+const wrappedToString = (withName, fromBody) => `/* Wrapped ${withName}*/\n${fromBody}`;
+
+const toStringDescriptor = Object.getOwnPropertyDescriptor(Function.prototype, 'toString');
+const toStringName = Object.getOwnPropertyDescriptor(Function.prototype.toString, 'name');
+
+// We call `from.toString()` early (not lazily) to ensure `from` can be garbage collected.
+// We use `bind()` instead of a closure for the same reason.
+// Calling `from.toString()` early also allows caching it in case `to.toString()` is called several times.
+const changeToString = (to, from, name) => {
+	const withName = name === '' ? '' : `with ${name.trim()}() `;
+	const newToString = wrappedToString.bind(null, withName, from.toString());
+	// Ensure `to.toString.toString` is non-enumerable and has the same `same`
+	Object.defineProperty(newToString, 'name', toStringName);
+	const {writable, enumerable, configurable} = toStringDescriptor; // We destructue to avoid a potential `get` descriptor.
+	Object.defineProperty(to, 'toString', {value: newToString, writable, enumerable, configurable});
+};
+
+function mimicFunction(to, from, {ignoreNonConfigurable = false} = {}) {
+	const {name} = to;
+
+	for (const property of Reflect.ownKeys(from)) {
+		copyProperty(to, from, property, ignoreNonConfigurable);
+	}
+
+	changePrototype(to, from);
+	changeToString(to, from, name);
+
+	return to;
+}
+
+const calledFunctions = new WeakMap();
+
+const onetime = (function_, options = {}) => {
+	if (typeof function_ !== 'function') {
+		throw new TypeError('Expected a function');
+	}
+
+	let returnValue;
+	let callCount = 0;
+	const functionName = function_.displayName || function_.name || '<anonymous>';
+
+	const onetime = function (...arguments_) {
+		calledFunctions.set(onetime, ++callCount);
+
+		if (callCount === 1) {
+			returnValue = function_.apply(this, arguments_);
+			function_ = undefined;
+		} else if (options.throw === true) {
+			throw new Error(`Function \`${functionName}\` can only be called once`);
+		}
+
+		return returnValue;
+	};
+
+	mimicFunction(onetime, function_);
+	calledFunctions.set(onetime, callCount);
+
+	return onetime;
+};
+
+onetime.callCount = function_ => {
+	if (!calledFunctions.has(function_)) {
+		throw new Error(`The given function \`${function_.name}\` is not wrapped by the \`onetime\` package`);
+	}
+
+	return calledFunctions.get(function_);
+};
+
+const terminal = process$3.stderr.isTTY
+	? process$3.stderr
+	: (process$3.stdout.isTTY ? process$3.stdout : undefined);
+
+const restoreCursor = terminal ? onetime(() => {
+	onExit(() => {
+		terminal.write('\u001B[?25h');
+	}, {alwaysLast: true});
+}) : () => {};
+
+let isHidden = false;
+
+const cliCursor = {};
+
+cliCursor.show = (writableStream = process$3.stderr) => {
+	if (!writableStream.isTTY) {
+		return;
+	}
+
+	isHidden = false;
+	writableStream.write('\u001B[?25h');
+};
+
+cliCursor.hide = (writableStream = process$3.stderr) => {
+	if (!writableStream.isTTY) {
+		return;
+	}
+
+	restoreCursor();
+	isHidden = true;
+	writableStream.write('\u001B[?25l');
+};
+
+cliCursor.toggle = (force, writableStream) => {
+	if (force !== undefined) {
+		isHidden = force;
+	}
+
+	if (isHidden) {
+		cliCursor.show(writableStream);
+	} else {
+		cliCursor.hide(writableStream);
+	}
+};
+
+const logSymbols = {
+	info: 'ℹ️',
+	success: '✅',
+	warning: '⚠️',
+	error: '❌️',
+};
+
+function ansiRegex({onlyFirst = false} = {}) {
+	const pattern = [
+	    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
+	].join('|');
+
+	return new RegExp(pattern, onlyFirst ? undefined : 'g');
+}
+
+const regex = ansiRegex();
+
+function stripAnsi(string) {
+	if (typeof string !== 'string') {
+		throw new TypeError(`Expected a \`string\`, got \`${typeof string}\``);
+	}
+
+	// Even though the regex is global, we don't need to reset the `.lastIndex`
+	// because unlike `.exec()` and `.test()`, `.replace()` does it automatically
+	// and doing it manually has a performance penalty.
+	return string.replace(regex, '');
+}
+
+// Generated code.
+
+function isAmbiguous(x) {
+	return x === 0xA1
+		|| x === 0xA4
+		|| x === 0xA7
+		|| x === 0xA8
+		|| x === 0xAA
+		|| x === 0xAD
+		|| x === 0xAE
+		|| x >= 0xB0 && x <= 0xB4
+		|| x >= 0xB6 && x <= 0xBA
+		|| x >= 0xBC && x <= 0xBF
+		|| x === 0xC6
+		|| x === 0xD0
+		|| x === 0xD7
+		|| x === 0xD8
+		|| x >= 0xDE && x <= 0xE1
+		|| x === 0xE6
+		|| x >= 0xE8 && x <= 0xEA
+		|| x === 0xEC
+		|| x === 0xED
+		|| x === 0xF0
+		|| x === 0xF2
+		|| x === 0xF3
+		|| x >= 0xF7 && x <= 0xFA
+		|| x === 0xFC
+		|| x === 0xFE
+		|| x === 0x101
+		|| x === 0x111
+		|| x === 0x113
+		|| x === 0x11B
+		|| x === 0x126
+		|| x === 0x127
+		|| x === 0x12B
+		|| x >= 0x131 && x <= 0x133
+		|| x === 0x138
+		|| x >= 0x13F && x <= 0x142
+		|| x === 0x144
+		|| x >= 0x148 && x <= 0x14B
+		|| x === 0x14D
+		|| x === 0x152
+		|| x === 0x153
+		|| x === 0x166
+		|| x === 0x167
+		|| x === 0x16B
+		|| x === 0x1CE
+		|| x === 0x1D0
+		|| x === 0x1D2
+		|| x === 0x1D4
+		|| x === 0x1D6
+		|| x === 0x1D8
+		|| x === 0x1DA
+		|| x === 0x1DC
+		|| x === 0x251
+		|| x === 0x261
+		|| x === 0x2C4
+		|| x === 0x2C7
+		|| x >= 0x2C9 && x <= 0x2CB
+		|| x === 0x2CD
+		|| x === 0x2D0
+		|| x >= 0x2D8 && x <= 0x2DB
+		|| x === 0x2DD
+		|| x === 0x2DF
+		|| x >= 0x300 && x <= 0x36F
+		|| x >= 0x391 && x <= 0x3A1
+		|| x >= 0x3A3 && x <= 0x3A9
+		|| x >= 0x3B1 && x <= 0x3C1
+		|| x >= 0x3C3 && x <= 0x3C9
+		|| x === 0x401
+		|| x >= 0x410 && x <= 0x44F
+		|| x === 0x451
+		|| x === 0x2010
+		|| x >= 0x2013 && x <= 0x2016
+		|| x === 0x2018
+		|| x === 0x2019
+		|| x === 0x201C
+		|| x === 0x201D
+		|| x >= 0x2020 && x <= 0x2022
+		|| x >= 0x2024 && x <= 0x2027
+		|| x === 0x2030
+		|| x === 0x2032
+		|| x === 0x2033
+		|| x === 0x2035
+		|| x === 0x203B
+		|| x === 0x203E
+		|| x === 0x2074
+		|| x === 0x207F
+		|| x >= 0x2081 && x <= 0x2084
+		|| x === 0x20AC
+		|| x === 0x2103
+		|| x === 0x2105
+		|| x === 0x2109
+		|| x === 0x2113
+		|| x === 0x2116
+		|| x === 0x2121
+		|| x === 0x2122
+		|| x === 0x2126
+		|| x === 0x212B
+		|| x === 0x2153
+		|| x === 0x2154
+		|| x >= 0x215B && x <= 0x215E
+		|| x >= 0x2160 && x <= 0x216B
+		|| x >= 0x2170 && x <= 0x2179
+		|| x === 0x2189
+		|| x >= 0x2190 && x <= 0x2199
+		|| x === 0x21B8
+		|| x === 0x21B9
+		|| x === 0x21D2
+		|| x === 0x21D4
+		|| x === 0x21E7
+		|| x === 0x2200
+		|| x === 0x2202
+		|| x === 0x2203
+		|| x === 0x2207
+		|| x === 0x2208
+		|| x === 0x220B
+		|| x === 0x220F
+		|| x === 0x2211
+		|| x === 0x2215
+		|| x === 0x221A
+		|| x >= 0x221D && x <= 0x2220
+		|| x === 0x2223
+		|| x === 0x2225
+		|| x >= 0x2227 && x <= 0x222C
+		|| x === 0x222E
+		|| x >= 0x2234 && x <= 0x2237
+		|| x === 0x223C
+		|| x === 0x223D
+		|| x === 0x2248
+		|| x === 0x224C
+		|| x === 0x2252
+		|| x === 0x2260
+		|| x === 0x2261
+		|| x >= 0x2264 && x <= 0x2267
+		|| x === 0x226A
+		|| x === 0x226B
+		|| x === 0x226E
+		|| x === 0x226F
+		|| x === 0x2282
+		|| x === 0x2283
+		|| x === 0x2286
+		|| x === 0x2287
+		|| x === 0x2295
+		|| x === 0x2299
+		|| x === 0x22A5
+		|| x === 0x22BF
+		|| x === 0x2312
+		|| x >= 0x2460 && x <= 0x24E9
+		|| x >= 0x24EB && x <= 0x254B
+		|| x >= 0x2550 && x <= 0x2573
+		|| x >= 0x2580 && x <= 0x258F
+		|| x >= 0x2592 && x <= 0x2595
+		|| x === 0x25A0
+		|| x === 0x25A1
+		|| x >= 0x25A3 && x <= 0x25A9
+		|| x === 0x25B2
+		|| x === 0x25B3
+		|| x === 0x25B6
+		|| x === 0x25B7
+		|| x === 0x25BC
+		|| x === 0x25BD
+		|| x === 0x25C0
+		|| x === 0x25C1
+		|| x >= 0x25C6 && x <= 0x25C8
+		|| x === 0x25CB
+		|| x >= 0x25CE && x <= 0x25D1
+		|| x >= 0x25E2 && x <= 0x25E5
+		|| x === 0x25EF
+		|| x === 0x2605
+		|| x === 0x2606
+		|| x === 0x2609
+		|| x === 0x260E
+		|| x === 0x260F
+		|| x === 0x261C
+		|| x === 0x261E
+		|| x === 0x2640
+		|| x === 0x2642
+		|| x === 0x2660
+		|| x === 0x2661
+		|| x >= 0x2663 && x <= 0x2665
+		|| x >= 0x2667 && x <= 0x266A
+		|| x === 0x266C
+		|| x === 0x266D
+		|| x === 0x266F
+		|| x === 0x269E
+		|| x === 0x269F
+		|| x === 0x26BF
+		|| x >= 0x26C6 && x <= 0x26CD
+		|| x >= 0x26CF && x <= 0x26D3
+		|| x >= 0x26D5 && x <= 0x26E1
+		|| x === 0x26E3
+		|| x === 0x26E8
+		|| x === 0x26E9
+		|| x >= 0x26EB && x <= 0x26F1
+		|| x === 0x26F4
+		|| x >= 0x26F6 && x <= 0x26F9
+		|| x === 0x26FB
+		|| x === 0x26FC
+		|| x === 0x26FE
+		|| x === 0x26FF
+		|| x === 0x273D
+		|| x >= 0x2776 && x <= 0x277F
+		|| x >= 0x2B56 && x <= 0x2B59
+		|| x >= 0x3248 && x <= 0x324F
+		|| x >= 0xE000 && x <= 0xF8FF
+		|| x >= 0xFE00 && x <= 0xFE0F
+		|| x === 0xFFFD
+		|| x >= 0x1F100 && x <= 0x1F10A
+		|| x >= 0x1F110 && x <= 0x1F12D
+		|| x >= 0x1F130 && x <= 0x1F169
+		|| x >= 0x1F170 && x <= 0x1F18D
+		|| x === 0x1F18F
+		|| x === 0x1F190
+		|| x >= 0x1F19B && x <= 0x1F1AC
+		|| x >= 0xE0100 && x <= 0xE01EF
+		|| x >= 0xF0000 && x <= 0xFFFFD
+		|| x >= 0x100000 && x <= 0x10FFFD;
+}
+
+function isFullWidth(x) {
+	return x === 0x3000
+		|| x >= 0xFF01 && x <= 0xFF60
+		|| x >= 0xFFE0 && x <= 0xFFE6;
+}
+
+function isWide(x) {
+	return x >= 0x1100 && x <= 0x115F
+		|| x === 0x231A
+		|| x === 0x231B
+		|| x === 0x2329
+		|| x === 0x232A
+		|| x >= 0x23E9 && x <= 0x23EC
+		|| x === 0x23F0
+		|| x === 0x23F3
+		|| x === 0x25FD
+		|| x === 0x25FE
+		|| x === 0x2614
+		|| x === 0x2615
+		|| x >= 0x2648 && x <= 0x2653
+		|| x === 0x267F
+		|| x === 0x2693
+		|| x === 0x26A1
+		|| x === 0x26AA
+		|| x === 0x26AB
+		|| x === 0x26BD
+		|| x === 0x26BE
+		|| x === 0x26C4
+		|| x === 0x26C5
+		|| x === 0x26CE
+		|| x === 0x26D4
+		|| x === 0x26EA
+		|| x === 0x26F2
+		|| x === 0x26F3
+		|| x === 0x26F5
+		|| x === 0x26FA
+		|| x === 0x26FD
+		|| x === 0x2705
+		|| x === 0x270A
+		|| x === 0x270B
+		|| x === 0x2728
+		|| x === 0x274C
+		|| x === 0x274E
+		|| x >= 0x2753 && x <= 0x2755
+		|| x === 0x2757
+		|| x >= 0x2795 && x <= 0x2797
+		|| x === 0x27B0
+		|| x === 0x27BF
+		|| x === 0x2B1B
+		|| x === 0x2B1C
+		|| x === 0x2B50
+		|| x === 0x2B55
+		|| x >= 0x2E80 && x <= 0x2E99
+		|| x >= 0x2E9B && x <= 0x2EF3
+		|| x >= 0x2F00 && x <= 0x2FD5
+		|| x >= 0x2FF0 && x <= 0x2FFF
+		|| x >= 0x3001 && x <= 0x303E
+		|| x >= 0x3041 && x <= 0x3096
+		|| x >= 0x3099 && x <= 0x30FF
+		|| x >= 0x3105 && x <= 0x312F
+		|| x >= 0x3131 && x <= 0x318E
+		|| x >= 0x3190 && x <= 0x31E3
+		|| x >= 0x31EF && x <= 0x321E
+		|| x >= 0x3220 && x <= 0x3247
+		|| x >= 0x3250 && x <= 0x4DBF
+		|| x >= 0x4E00 && x <= 0xA48C
+		|| x >= 0xA490 && x <= 0xA4C6
+		|| x >= 0xA960 && x <= 0xA97C
+		|| x >= 0xAC00 && x <= 0xD7A3
+		|| x >= 0xF900 && x <= 0xFAFF
+		|| x >= 0xFE10 && x <= 0xFE19
+		|| x >= 0xFE30 && x <= 0xFE52
+		|| x >= 0xFE54 && x <= 0xFE66
+		|| x >= 0xFE68 && x <= 0xFE6B
+		|| x >= 0x16FE0 && x <= 0x16FE4
+		|| x === 0x16FF0
+		|| x === 0x16FF1
+		|| x >= 0x17000 && x <= 0x187F7
+		|| x >= 0x18800 && x <= 0x18CD5
+		|| x >= 0x18D00 && x <= 0x18D08
+		|| x >= 0x1AFF0 && x <= 0x1AFF3
+		|| x >= 0x1AFF5 && x <= 0x1AFFB
+		|| x === 0x1AFFD
+		|| x === 0x1AFFE
+		|| x >= 0x1B000 && x <= 0x1B122
+		|| x === 0x1B132
+		|| x >= 0x1B150 && x <= 0x1B152
+		|| x === 0x1B155
+		|| x >= 0x1B164 && x <= 0x1B167
+		|| x >= 0x1B170 && x <= 0x1B2FB
+		|| x === 0x1F004
+		|| x === 0x1F0CF
+		|| x === 0x1F18E
+		|| x >= 0x1F191 && x <= 0x1F19A
+		|| x >= 0x1F200 && x <= 0x1F202
+		|| x >= 0x1F210 && x <= 0x1F23B
+		|| x >= 0x1F240 && x <= 0x1F248
+		|| x === 0x1F250
+		|| x === 0x1F251
+		|| x >= 0x1F260 && x <= 0x1F265
+		|| x >= 0x1F300 && x <= 0x1F320
+		|| x >= 0x1F32D && x <= 0x1F335
+		|| x >= 0x1F337 && x <= 0x1F37C
+		|| x >= 0x1F37E && x <= 0x1F393
+		|| x >= 0x1F3A0 && x <= 0x1F3CA
+		|| x >= 0x1F3CF && x <= 0x1F3D3
+		|| x >= 0x1F3E0 && x <= 0x1F3F0
+		|| x === 0x1F3F4
+		|| x >= 0x1F3F8 && x <= 0x1F43E
+		|| x === 0x1F440
+		|| x >= 0x1F442 && x <= 0x1F4FC
+		|| x >= 0x1F4FF && x <= 0x1F53D
+		|| x >= 0x1F54B && x <= 0x1F54E
+		|| x >= 0x1F550 && x <= 0x1F567
+		|| x === 0x1F57A
+		|| x === 0x1F595
+		|| x === 0x1F596
+		|| x === 0x1F5A4
+		|| x >= 0x1F5FB && x <= 0x1F64F
+		|| x >= 0x1F680 && x <= 0x1F6C5
+		|| x === 0x1F6CC
+		|| x >= 0x1F6D0 && x <= 0x1F6D2
+		|| x >= 0x1F6D5 && x <= 0x1F6D7
+		|| x >= 0x1F6DC && x <= 0x1F6DF
+		|| x === 0x1F6EB
+		|| x === 0x1F6EC
+		|| x >= 0x1F6F4 && x <= 0x1F6FC
+		|| x >= 0x1F7E0 && x <= 0x1F7EB
+		|| x === 0x1F7F0
+		|| x >= 0x1F90C && x <= 0x1F93A
+		|| x >= 0x1F93C && x <= 0x1F945
+		|| x >= 0x1F947 && x <= 0x1F9FF
+		|| x >= 0x1FA70 && x <= 0x1FA7C
+		|| x >= 0x1FA80 && x <= 0x1FA88
+		|| x >= 0x1FA90 && x <= 0x1FABD
+		|| x >= 0x1FABF && x <= 0x1FAC5
+		|| x >= 0x1FACE && x <= 0x1FADB
+		|| x >= 0x1FAE0 && x <= 0x1FAE8
+		|| x >= 0x1FAF0 && x <= 0x1FAF8
+		|| x >= 0x20000 && x <= 0x2FFFD
+		|| x >= 0x30000 && x <= 0x3FFFD;
+}
+
+function validate(codePoint) {
+	if (!Number.isSafeInteger(codePoint)) {
+		throw new TypeError(`Expected a code point, got \`${typeof codePoint}\`.`);
+	}
+}
+
+function eastAsianWidth(codePoint, {ambiguousAsWide = false} = {}) {
+	validate(codePoint);
+
+	if (
+		isFullWidth(codePoint)
+		|| isWide(codePoint)
+		|| (ambiguousAsWide && isAmbiguous(codePoint))
+	) {
+		return 2;
+	}
+
+	return 1;
+}
+
+var emojiRegex = () => {
+	// https://mths.be/emoji
+	return /[#*0-9]\uFE0F?\u20E3|[\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23ED-\u23EF\u23F1\u23F2\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB\u25FC\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692\u2694-\u2697\u2699\u269B\u269C\u26A0\u26A7\u26AA\u26B0\u26B1\u26BD\u26BE\u26C4\u26C8\u26CF\u26D1\u26E9\u26F0-\u26F5\u26F7\u26F8\u26FA\u2702\u2708\u2709\u270F\u2712\u2714\u2716\u271D\u2721\u2733\u2734\u2744\u2747\u2757\u2763\u27A1\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B55\u3030\u303D\u3297\u3299]\uFE0F?|[\u261D\u270C\u270D](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\u270A\u270B](?:\uD83C[\uDFFB-\uDFFF])?|[\u23E9-\u23EC\u23F0\u23F3\u25FD\u2693\u26A1\u26AB\u26C5\u26CE\u26D4\u26EA\u26FD\u2705\u2728\u274C\u274E\u2753-\u2755\u2795-\u2797\u27B0\u27BF\u2B50]|\u26D3\uFE0F?(?:\u200D\uD83D\uDCA5)?|\u26F9(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\u2764\uFE0F?(?:\u200D(?:\uD83D\uDD25|\uD83E\uDE79))?|\uD83C(?:[\uDC04\uDD70\uDD71\uDD7E\uDD7F\uDE02\uDE37\uDF21\uDF24-\uDF2C\uDF36\uDF7D\uDF96\uDF97\uDF99-\uDF9B\uDF9E\uDF9F\uDFCD\uDFCE\uDFD4-\uDFDF\uDFF5\uDFF7]\uFE0F?|[\uDF85\uDFC2\uDFC7](?:\uD83C[\uDFFB-\uDFFF])?|[\uDFC4\uDFCA](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDFCB\uDFCC](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDCCF\uDD8E\uDD91-\uDD9A\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF43\uDF45-\uDF4A\uDF4C-\uDF7C\uDF7E-\uDF84\uDF86-\uDF93\uDFA0-\uDFC1\uDFC5\uDFC6\uDFC8\uDFC9\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF8-\uDFFF]|\uDDE6\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF]|\uDDE7\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF]|\uDDE8\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF7\uDDFA-\uDDFF]|\uDDE9\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF]|\uDDEA\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA]|\uDDEB\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7]|\uDDEC\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE]|\uDDED\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA]|\uDDEE\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9]|\uDDEF\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5]|\uDDF0\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF]|\uDDF1\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE]|\uDDF2\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF]|\uDDF3\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF]|\uDDF4\uD83C\uDDF2|\uDDF5\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE]|\uDDF6\uD83C\uDDE6|\uDDF7\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC]|\uDDF8\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF]|\uDDF9\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF]|\uDDFA\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF]|\uDDFB\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA]|\uDDFC\uD83C[\uDDEB\uDDF8]|\uDDFD\uD83C\uDDF0|\uDDFE\uD83C[\uDDEA\uDDF9]|\uDDFF\uD83C[\uDDE6\uDDF2\uDDFC]|\uDF44(?:\u200D\uD83D\uDFEB)?|\uDF4B(?:\u200D\uD83D\uDFE9)?|\uDFC3(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDFF3\uFE0F?(?:\u200D(?:\u26A7\uFE0F?|\uD83C\uDF08))?|\uDFF4(?:\u200D\u2620\uFE0F?|\uDB40\uDC67\uDB40\uDC62\uDB40(?:\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDC73\uDB40\uDC63\uDB40\uDC74|\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F)?)|\uD83D(?:[\uDC3F\uDCFD\uDD49\uDD4A\uDD6F\uDD70\uDD73\uDD76-\uDD79\uDD87\uDD8A-\uDD8D\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA\uDECB\uDECD-\uDECF\uDEE0-\uDEE5\uDEE9\uDEF0\uDEF3]\uFE0F?|[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDC8F\uDC91\uDCAA\uDD7A\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC](?:\uD83C[\uDFFB-\uDFFF])?|[\uDC6E\uDC70\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4\uDEB5](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD74\uDD90](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\uDC00-\uDC07\uDC09-\uDC14\uDC16-\uDC25\uDC27-\uDC3A\uDC3C-\uDC3E\uDC40\uDC44\uDC45\uDC51-\uDC65\uDC6A\uDC79-\uDC7B\uDC7D-\uDC80\uDC84\uDC88-\uDC8E\uDC90\uDC92-\uDCA9\uDCAB-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDDA4\uDDFB-\uDE2D\uDE2F-\uDE34\uDE37-\uDE41\uDE43\uDE44\uDE48-\uDE4A\uDE80-\uDEA2\uDEA4-\uDEB3\uDEB7-\uDEBF\uDEC1-\uDEC5\uDED0-\uDED2\uDED5-\uDED7\uDEDC-\uDEDF\uDEEB\uDEEC\uDEF4-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uDC08(?:\u200D\u2B1B)?|\uDC15(?:\u200D\uD83E\uDDBA)?|\uDC26(?:\u200D(?:\u2B1B|\uD83D\uDD25))?|\uDC3B(?:\u200D\u2744\uFE0F?)?|\uDC41\uFE0F?(?:\u200D\uD83D\uDDE8\uFE0F?)?|\uDC68(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDC68\uDC69]\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE])))?))?|\uDC69(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?[\uDC68\uDC69]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?|\uDC69\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?))|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFE])))?))?|\uDC6F(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDD75(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDE2E(?:\u200D\uD83D\uDCA8)?|\uDE35(?:\u200D\uD83D\uDCAB)?|\uDE36(?:\u200D\uD83C\uDF2B\uFE0F?)?|\uDE42(?:\u200D[\u2194\u2195]\uFE0F?)?|\uDEB6(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?)|\uD83E(?:[\uDD0C\uDD0F\uDD18-\uDD1F\uDD30-\uDD34\uDD36\uDD77\uDDB5\uDDB6\uDDBB\uDDD2\uDDD3\uDDD5\uDEC3-\uDEC5\uDEF0\uDEF2-\uDEF8](?:\uD83C[\uDFFB-\uDFFF])?|[\uDD26\uDD35\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD\uDDCF\uDDD4\uDDD6-\uDDDD](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDDDE\uDDDF](?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD0D\uDD0E\uDD10-\uDD17\uDD20-\uDD25\uDD27-\uDD2F\uDD3A\uDD3F-\uDD45\uDD47-\uDD76\uDD78-\uDDB4\uDDB7\uDDBA\uDDBC-\uDDCC\uDDD0\uDDE0-\uDDFF\uDE70-\uDE7C\uDE80-\uDE89\uDE8F-\uDEC2\uDEC6\uDECE-\uDEDC\uDEDF-\uDEE9]|\uDD3C(?:\u200D[\u2640\u2642]\uFE0F?|\uD83C[\uDFFB-\uDFFF])?|\uDDCE(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDDD1(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1|\uDDD1\u200D\uD83E\uDDD2(?:\u200D\uD83E\uDDD2)?|\uDDD2(?:\u200D\uD83E\uDDD2)?))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF])))?))?|\uDEF1(?:\uD83C(?:\uDFFB(?:\u200D\uD83E\uDEF2\uD83C[\uDFFC-\uDFFF])?|\uDFFC(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFD-\uDFFF])?|\uDFFD(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])?|\uDFFE(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFD\uDFFF])?|\uDFFF(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFE])?))?)/g;
+};
+
+const segmenter = new Intl.Segmenter();
+
+const defaultIgnorableCodePointRegex = /^\p{Default_Ignorable_Code_Point}$/u;
+
+function stringWidth(string, options = {}) {
+	if (typeof string !== 'string' || string.length === 0) {
+		return 0;
+	}
+
+	const {
+		ambiguousIsNarrow = true,
+		countAnsiEscapeCodes = false,
+	} = options;
+
+	if (!countAnsiEscapeCodes) {
+		string = stripAnsi(string);
+	}
+
+	if (string.length === 0) {
+		return 0;
+	}
+
+	let width = 0;
+	const eastAsianWidthOptions = {ambiguousAsWide: !ambiguousIsNarrow};
+
+	for (const {segment: character} of segmenter.segment(string)) {
+		const codePoint = character.codePointAt(0);
+
+		// Ignore control characters
+		if (codePoint <= 0x1F || (codePoint >= 0x7F && codePoint <= 0x9F)) {
+			continue;
+		}
+
+		// Ignore zero-width characters
+		if (
+			(codePoint >= 0x20_0B && codePoint <= 0x20_0F) // Zero-width space, non-joiner, joiner, left-to-right mark, right-to-left mark
+			|| codePoint === 0xFE_FF // Zero-width no-break space
+		) {
+			continue;
+		}
+
+		// Ignore combining characters
+		if (
+			(codePoint >= 0x3_00 && codePoint <= 0x3_6F) // Combining diacritical marks
+			|| (codePoint >= 0x1A_B0 && codePoint <= 0x1A_FF) // Combining diacritical marks extended
+			|| (codePoint >= 0x1D_C0 && codePoint <= 0x1D_FF) // Combining diacritical marks supplement
+			|| (codePoint >= 0x20_D0 && codePoint <= 0x20_FF) // Combining diacritical marks for symbols
+			|| (codePoint >= 0xFE_20 && codePoint <= 0xFE_2F) // Combining half marks
+		) {
+			continue;
+		}
+
+		// Ignore surrogate pairs
+		if (codePoint >= 0xD8_00 && codePoint <= 0xDF_FF) {
+			continue;
+		}
+
+		// Ignore variation selectors
+		if (codePoint >= 0xFE_00 && codePoint <= 0xFE_0F) {
+			continue;
+		}
+
+		// This covers some of the above cases, but we still keep them for performance reasons.
+		if (defaultIgnorableCodePointRegex.test(character)) {
+			continue;
+		}
+
+		// TODO: Use `/\p{RGI_Emoji}/v` when targeting Node.js 20.
+		if (emojiRegex().test(character)) {
+			width += 2;
+			continue;
+		}
+
+		width += eastAsianWidth(codePoint, eastAsianWidthOptions);
+	}
+
+	return width;
+}
+
+function isInteractive({stream = process.stdout} = {}) {
+	return Boolean(
+		stream && stream.isTTY &&
+		process.env.TERM !== 'dumb' &&
+		!('CI' in process.env)
+	);
+}
+
+function isUnicodeSupported() {
+	if (process$3.platform !== 'win32') {
+		return process$3.env.TERM !== 'linux'; // Linux console (kernel)
+	}
+
+	return Boolean(process$3.env.WT_SESSION) // Windows Terminal
+		|| Boolean(process$3.env.TERMINUS_SUBLIME) // Terminus (<0.2.27)
+		|| process$3.env.ConEmuTask === '{cmd::Cmder}' // ConEmu and cmder
+		|| process$3.env.TERM_PROGRAM === 'Terminus-Sublime'
+		|| process$3.env.TERM_PROGRAM === 'vscode'
+		|| process$3.env.TERM === 'xterm-256color'
+		|| process$3.env.TERM === 'alacritty'
+		|| process$3.env.TERMINAL_EMULATOR === 'JetBrains-JediTerm';
+}
+
+const ASCII_ETX_CODE = 0x03; // Ctrl+C emits this code
+
+class StdinDiscarder {
+	#activeCount = 0;
+
+	start() {
+		this.#activeCount++;
+
+		if (this.#activeCount === 1) {
+			this.#realStart();
+		}
+	}
+
+	stop() {
+		if (this.#activeCount <= 0) {
+			throw new Error('`stop` called more times than `start`');
+		}
+
+		this.#activeCount--;
+
+		if (this.#activeCount === 0) {
+			this.#realStop();
+		}
+	}
+
+	#realStart() {
+		// No known way to make it work reliably on Windows.
+		if (process$3.platform === 'win32' || !process$3.stdin.isTTY) {
+			return;
+		}
+
+		process$3.stdin.setRawMode(true);
+		process$3.stdin.on('data', this.#handleInput);
+		process$3.stdin.resume();
+	}
+
+	#realStop() {
+		if (!process$3.stdin.isTTY) {
+			return;
+		}
+
+		process$3.stdin.off('data', this.#handleInput);
+		process$3.stdin.pause();
+		process$3.stdin.setRawMode(false);
+	}
+
+	#handleInput(chunk) {
+		// Allow Ctrl+C to gracefully exit.
+		if (chunk[0] === ASCII_ETX_CODE) {
+			process$3.emit('SIGINT');
+		}
+	}
+}
+
+const stdinDiscarder = new StdinDiscarder();
+
+class Ora {
+	#linesToClear = 0;
+	#isDiscardingStdin = false;
+	#lineCount = 0;
+	#frameIndex = 0;
+	#options;
+	#spinner;
+	#stream;
+	#id;
+	#initialInterval;
+	#isEnabled;
+	#isSilent;
+	#indent;
+	#text;
+	#prefixText;
+	#suffixText;
+	color;
+
+	constructor(options) {
+		if (typeof options === 'string') {
+			options = {
+				text: options,
+			};
+		}
+
+		this.#options = {
+			color: 'cyan',
+			stream: process$3.stderr,
+			discardStdin: true,
+			hideCursor: true,
+			...options,
+		};
+
+		// Public
+		this.color = this.#options.color;
+
+		// It's important that these use the public setters.
+		this.spinner = this.#options.spinner;
+
+		this.#initialInterval = this.#options.interval;
+		this.#stream = this.#options.stream;
+		this.#isEnabled = typeof this.#options.isEnabled === 'boolean' ? this.#options.isEnabled : isInteractive({stream: this.#stream});
+		this.#isSilent = typeof this.#options.isSilent === 'boolean' ? this.#options.isSilent : false;
+
+		// Set *after* `this.#stream`.
+		// It's important that these use the public setters.
+		this.text = this.#options.text;
+		this.prefixText = this.#options.prefixText;
+		this.suffixText = this.#options.suffixText;
+		this.indent = this.#options.indent;
+
+		if (process$3.env.NODE_ENV === 'test') {
+			this._stream = this.#stream;
+			this._isEnabled = this.#isEnabled;
+
+			Object.defineProperty(this, '_linesToClear', {
+				get() {
+					return this.#linesToClear;
+				},
+				set(newValue) {
+					this.#linesToClear = newValue;
+				},
+			});
+
+			Object.defineProperty(this, '_frameIndex', {
+				get() {
+					return this.#frameIndex;
+				},
+			});
+
+			Object.defineProperty(this, '_lineCount', {
+				get() {
+					return this.#lineCount;
+				},
+			});
+		}
+	}
+
+	get indent() {
+		return this.#indent;
+	}
+
+	set indent(indent = 0) {
+		if (!(indent >= 0 && Number.isInteger(indent))) {
+			throw new Error('The `indent` option must be an integer from 0 and up');
+		}
+
+		this.#indent = indent;
+		this.#updateLineCount();
+	}
+
+	get interval() {
+		return this.#initialInterval ?? this.#spinner.interval ?? 100;
+	}
+
+	get spinner() {
+		return this.#spinner;
+	}
+
+	set spinner(spinner) {
+		this.#frameIndex = 0;
+		this.#initialInterval = undefined;
+
+		if (typeof spinner === 'object') {
+			if (spinner.frames === undefined) {
+				throw new Error('The given spinner must have a `frames` property');
+			}
+
+			this.#spinner = spinner;
+		} else if (!isUnicodeSupported()) {
+			this.#spinner = cliSpinners$1.line;
+		} else if (spinner === undefined) {
+			// Set default spinner
+			this.#spinner = cliSpinners$1.dots;
+		} else if (spinner !== 'default' && cliSpinners$1[spinner]) {
+			this.#spinner = cliSpinners$1[spinner];
+		} else {
+			throw new Error(`There is no built-in spinner named '${spinner}'. See https://github.com/sindresorhus/cli-spinners/blob/main/spinners.json for a full list.`);
+		}
+	}
+
+	get text() {
+		return this.#text;
+	}
+
+	set text(value = '') {
+		this.#text = value;
+		this.#updateLineCount();
+	}
+
+	get prefixText() {
+		return this.#prefixText;
+	}
+
+	set prefixText(value = '') {
+		this.#prefixText = value;
+		this.#updateLineCount();
+	}
+
+	get suffixText() {
+		return this.#suffixText;
+	}
+
+	set suffixText(value = '') {
+		this.#suffixText = value;
+		this.#updateLineCount();
+	}
+
+	get isSpinning() {
+		return this.#id !== undefined;
+	}
+
+	#getFullPrefixText(prefixText = this.#prefixText, postfix = ' ') {
+		if (typeof prefixText === 'string' && prefixText !== '') {
+			return prefixText + postfix;
+		}
+
+		if (typeof prefixText === 'function') {
+			return prefixText() + postfix;
+		}
+
+		return '';
+	}
+
+	#getFullSuffixText(suffixText = this.#suffixText, prefix = ' ') {
+		if (typeof suffixText === 'string' && suffixText !== '') {
+			return prefix + suffixText;
+		}
+
+		if (typeof suffixText === 'function') {
+			return prefix + suffixText();
+		}
+
+		return '';
+	}
+
+	#updateLineCount() {
+		const columns = this.#stream.columns ?? 80;
+		const fullPrefixText = this.#getFullPrefixText(this.#prefixText, '-');
+		const fullSuffixText = this.#getFullSuffixText(this.#suffixText, '-');
+		const fullText = ' '.repeat(this.#indent) + fullPrefixText + '--' + this.#text + '--' + fullSuffixText;
+
+		this.#lineCount = 0;
+		for (const line of stripAnsi(fullText).split('\n')) {
+			this.#lineCount += Math.max(1, Math.ceil(stringWidth(line, {countAnsiEscapeCodes: true}) / columns));
+		}
+	}
+
+	get isEnabled() {
+		return this.#isEnabled && !this.#isSilent;
+	}
+
+	set isEnabled(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isEnabled` option must be a boolean');
+		}
+
+		this.#isEnabled = value;
+	}
+
+	get isSilent() {
+		return this.#isSilent;
+	}
+
+	set isSilent(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isSilent` option must be a boolean');
+		}
+
+		this.#isSilent = value;
+	}
+
+	frame() {
+		const {frames} = this.#spinner;
+		let frame = frames[this.#frameIndex];
+
+		if (this.color) {
+			frame = chalk$2[this.color](frame);
+		}
+
+		this.#frameIndex = ++this.#frameIndex % frames.length;
+		const fullPrefixText = (typeof this.#prefixText === 'string' && this.#prefixText !== '') ? this.#prefixText + ' ' : '';
+		const fullText = typeof this.text === 'string' ? ' ' + this.text : '';
+		const fullSuffixText = (typeof this.#suffixText === 'string' && this.#suffixText !== '') ? ' ' + this.#suffixText : '';
+
+		return fullPrefixText + frame + fullText + fullSuffixText;
+	}
+
+	clear() {
+		if (!this.#isEnabled || !this.#stream.isTTY) {
+			return this;
+		}
+
+		this.#stream.cursorTo(0);
+
+		for (let index = 0; index < this.#linesToClear; index++) {
+			if (index > 0) {
+				this.#stream.moveCursor(0, -1);
+			}
+
+			this.#stream.clearLine(1);
+		}
+
+		if (this.#indent || this.lastIndent !== this.#indent) {
+			this.#stream.cursorTo(this.#indent);
+		}
+
+		this.lastIndent = this.#indent;
+		this.#linesToClear = 0;
+
+		return this;
+	}
+
+	render() {
+		if (this.#isSilent) {
+			return this;
+		}
+
+		this.clear();
+		this.#stream.write(this.frame());
+		this.#linesToClear = this.#lineCount;
+
+		return this;
+	}
+
+	start(text) {
+		if (text) {
+			this.text = text;
+		}
+
+		if (this.#isSilent) {
+			return this;
+		}
+
+		if (!this.#isEnabled) {
+			if (this.text) {
+				this.#stream.write(`- ${this.text}\n`);
+			}
+
+			return this;
+		}
+
+		if (this.isSpinning) {
+			return this;
+		}
+
+		if (this.#options.hideCursor) {
+			cliCursor.hide(this.#stream);
+		}
+
+		if (this.#options.discardStdin && process$3.stdin.isTTY) {
+			this.#isDiscardingStdin = true;
+			stdinDiscarder.start();
+		}
+
+		this.render();
+		this.#id = setInterval(this.render.bind(this), this.interval);
+
+		return this;
+	}
+
+	stop() {
+		if (!this.#isEnabled) {
+			return this;
+		}
+
+		clearInterval(this.#id);
+		this.#id = undefined;
+		this.#frameIndex = 0;
+		this.clear();
+		if (this.#options.hideCursor) {
+			cliCursor.show(this.#stream);
+		}
+
+		if (this.#options.discardStdin && process$3.stdin.isTTY && this.#isDiscardingStdin) {
+			stdinDiscarder.stop();
+			this.#isDiscardingStdin = false;
+		}
+
+		return this;
+	}
+
+	succeed(text) {
+		return this.stopAndPersist({symbol: logSymbols.success, text});
+	}
+
+	fail(text) {
+		return this.stopAndPersist({symbol: logSymbols.error, text});
+	}
+
+	warn(text) {
+		return this.stopAndPersist({symbol: logSymbols.warning, text});
+	}
+
+	info(text) {
+		return this.stopAndPersist({symbol: logSymbols.info, text});
+	}
+
+	stopAndPersist(options = {}) {
+		if (this.#isSilent) {
+			return this;
+		}
+
+		const prefixText = options.prefixText ?? this.#prefixText;
+		const fullPrefixText = this.#getFullPrefixText(prefixText, ' ');
+
+		const symbolText = options.symbol ?? ' ';
+
+		const text = options.text ?? this.text;
+		const fullText = (typeof text === 'string') ? ' ' + text : '';
+
+		const suffixText = options.suffixText ?? this.#suffixText;
+		const fullSuffixText = this.#getFullSuffixText(suffixText, ' ');
+
+		const textToWrite = fullPrefixText + symbolText + fullText + fullSuffixText + '\n';
+
+		this.stop();
+		this.#stream.write(textToWrite);
+
+		return this;
+	}
+}
+
+function ora(options) {
+	return new Ora(options);
+}
 
 var hasFlag$1 = (flag, argv = process.argv) => {
 	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
@@ -8600,378 +10182,1028 @@ var util = {
 var templates;
 var hasRequiredTemplates;
 
-function requireTemplates () {
-	if (hasRequiredTemplates) return templates;
-	hasRequiredTemplates = 1;
-	const TEMPLATE_REGEX = /(?:\\(u(?:[a-f\d]{4}|\{[a-f\d]{1,6}\})|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
-	const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
-	const STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
-	const ESCAPE_REGEX = /\\(u(?:[a-f\d]{4}|{[a-f\d]{1,6}})|x[a-f\d]{2}|.)|([^\\])/gi;
+function require_stream_passthrough () {
+	if (hasRequired_stream_passthrough) return _stream_passthrough;
+	hasRequired_stream_passthrough = 1;
 
-	const ESCAPES = new Map([
-		['n', '\n'],
-		['r', '\r'],
-		['t', '\t'],
-		['b', '\b'],
-		['f', '\f'],
-		['v', '\v'],
-		['0', '\0'],
-		['\\', '\\'],
-		['e', '\u001B'],
-		['a', '\u0007']
-	]);
-
-	function unescape(c) {
-		const u = c[0] === 'u';
-		const bracket = c[1] === '{';
-
-		if ((u && !bracket && c.length === 5) || (c[0] === 'x' && c.length === 3)) {
-			return String.fromCharCode(parseInt(c.slice(1), 16));
-		}
-
-		if (u && bracket) {
-			return String.fromCodePoint(parseInt(c.slice(2, -1), 16));
-		}
-
-		return ESCAPES.get(c) || c;
+	_stream_passthrough = PassThrough;
+	var Transform = require_stream_transform();
+	inheritsExports(PassThrough, Transform);
+	function PassThrough(options) {
+	  if (!(this instanceof PassThrough)) return new PassThrough(options);
+	  Transform.call(this, options);
 	}
+	PassThrough.prototype._transform = function (chunk, encoding, cb) {
+	  cb(null, chunk);
+	};
+	return _stream_passthrough;
+}
 
-	function parseArguments(name, arguments_) {
-		const results = [];
-		const chunks = arguments_.trim().split(/\s*,\s*/g);
-		let matches;
+var pipeline_1;
+var hasRequiredPipeline;
 
-		for (const chunk of chunks) {
-			const number = Number(chunk);
-			if (!Number.isNaN(number)) {
-				results.push(number);
-			} else if ((matches = chunk.match(STRING_REGEX))) {
-				results.push(matches[2].replace(ESCAPE_REGEX, (m, escape, character) => escape ? unescape(escape) : character));
-			} else {
-				throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
-			}
-		}
+function requirePipeline () {
+	if (hasRequiredPipeline) return pipeline_1;
+	hasRequiredPipeline = 1;
 
-		return results;
+	var eos;
+	function once(callback) {
+	  var called = false;
+	  return function () {
+	    if (called) return;
+	    called = true;
+	    callback.apply(void 0, arguments);
+	  };
 	}
-
-	function parseStyle(style) {
-		STYLE_REGEX.lastIndex = 0;
-
-		const results = [];
-		let matches;
-
-		while ((matches = STYLE_REGEX.exec(style)) !== null) {
-			const name = matches[1];
-
-			if (matches[2]) {
-				const args = parseArguments(name, matches[2]);
-				results.push([name].concat(args));
-			} else {
-				results.push([name]);
-			}
-		}
-
-		return results;
+	var _require$codes = requireErrors().codes,
+	  ERR_MISSING_ARGS = _require$codes.ERR_MISSING_ARGS,
+	  ERR_STREAM_DESTROYED = _require$codes.ERR_STREAM_DESTROYED;
+	function noop(err) {
+	  // Rethrow the error if it exists to avoid swallowing it
+	  if (err) throw err;
 	}
-
-	function buildStyle(chalk, styles) {
-		const enabled = {};
-
-		for (const layer of styles) {
-			for (const style of layer.styles) {
-				enabled[style[0]] = layer.inverse ? null : style.slice(1);
-			}
-		}
-
-		let current = chalk;
-		for (const [styleName, styles] of Object.entries(enabled)) {
-			if (!Array.isArray(styles)) {
-				continue;
-			}
-
-			if (!(styleName in current)) {
-				throw new Error(`Unknown Chalk style: ${styleName}`);
-			}
-
-			current = styles.length > 0 ? current[styleName](...styles) : current[styleName];
-		}
-
-		return current;
+	function isRequest(stream) {
+	  return stream.setHeader && typeof stream.abort === 'function';
 	}
+	function destroyer(stream, reading, writing, callback) {
+	  callback = once(callback);
+	  var closed = false;
+	  stream.on('close', function () {
+	    closed = true;
+	  });
+	  if (eos === undefined) eos = requireEndOfStream();
+	  eos(stream, {
+	    readable: reading,
+	    writable: writing
+	  }, function (err) {
+	    if (err) return callback(err);
+	    closed = true;
+	    callback();
+	  });
+	  var destroyed = false;
+	  return function (err) {
+	    if (closed) return;
+	    if (destroyed) return;
+	    destroyed = true;
 
-	templates = (chalk, temporary) => {
-		const styles = [];
-		const chunks = [];
-		let chunk = [];
+	    // request.destroy just do .end - .abort is what we want
+	    if (isRequest(stream)) return stream.abort();
+	    if (typeof stream.destroy === 'function') return stream.destroy();
+	    callback(err || new ERR_STREAM_DESTROYED('pipe'));
+	  };
+	}
+	function call(fn) {
+	  fn();
+	}
+	function pipe(from, to) {
+	  return from.pipe(to);
+	}
+	function popCallback(streams) {
+	  if (!streams.length) return noop;
+	  if (typeof streams[streams.length - 1] !== 'function') return noop;
+	  return streams.pop();
+	}
+	function pipeline() {
+	  for (var _len = arguments.length, streams = new Array(_len), _key = 0; _key < _len; _key++) {
+	    streams[_key] = arguments[_key];
+	  }
+	  var callback = popCallback(streams);
+	  if (Array.isArray(streams[0])) streams = streams[0];
+	  if (streams.length < 2) {
+	    throw new ERR_MISSING_ARGS('streams');
+	  }
+	  var error;
+	  var destroys = streams.map(function (stream, i) {
+	    var reading = i < streams.length - 1;
+	    var writing = i > 0;
+	    return destroyer(stream, reading, writing, function (err) {
+	      if (!error) error = err;
+	      if (err) destroys.forEach(call);
+	      if (reading) return;
+	      destroys.forEach(call);
+	      callback(error);
+	    });
+	  });
+	  return streams.reduce(pipe);
+	}
+	pipeline_1 = pipeline;
+	return pipeline_1;
+}
 
-		// eslint-disable-next-line max-params
-		temporary.replace(TEMPLATE_REGEX, (m, escapeCharacter, inverse, style, close, character) => {
-			if (escapeCharacter) {
-				chunk.push(unescape(escapeCharacter));
-			} else if (style) {
-				const string = chunk.join('');
-				chunk = [];
-				chunks.push(styles.length === 0 ? string : buildStyle(chalk, styles)(string));
-				styles.push({inverse, styles: parseStyle(style)});
-			} else if (close) {
-				if (styles.length === 0) {
-					throw new Error('Found extraneous } in Chalk template literal');
+(function (module, exports) {
+	var Stream = require$$1$1;
+	if (process.env.READABLE_STREAM === 'disable' && Stream) {
+	  module.exports = Stream.Readable;
+	  Object.assign(module.exports, Stream);
+	  module.exports.Stream = Stream;
+	} else {
+	  exports = module.exports = require_stream_readable();
+	  exports.Stream = Stream || exports;
+	  exports.Readable = exports;
+	  exports.Writable = require_stream_writable();
+	  exports.Duplex = require_stream_duplex();
+	  exports.Transform = require_stream_transform();
+	  exports.PassThrough = require_stream_passthrough();
+	  exports.finished = requireEndOfStream();
+	  exports.pipeline = requirePipeline();
+	} 
+} (readable, readable.exports));
+
+var readableExports = readable.exports;
+
+const { Buffer: Buffer$1 } = require$$0$6;
+const symbol = Symbol.for('BufferList');
+
+function BufferList$1 (buf) {
+  if (!(this instanceof BufferList$1)) {
+    return new BufferList$1(buf)
+  }
+
+  BufferList$1._init.call(this, buf);
+}
+
+BufferList$1._init = function _init (buf) {
+  Object.defineProperty(this, symbol, { value: true });
+
+  this._bufs = [];
+  this.length = 0;
+
+  if (buf) {
+    this.append(buf);
+  }
+};
+
+BufferList$1.prototype._new = function _new (buf) {
+  return new BufferList$1(buf)
+};
+
+BufferList$1.prototype._offset = function _offset (offset) {
+  if (offset === 0) {
+    return [0, 0]
+  }
+
+  let tot = 0;
+
+  for (let i = 0; i < this._bufs.length; i++) {
+    const _t = tot + this._bufs[i].length;
+    if (offset < _t || i === this._bufs.length - 1) {
+      return [i, offset - tot]
+    }
+    tot = _t;
+  }
+};
+
+BufferList$1.prototype._reverseOffset = function (blOffset) {
+  const bufferId = blOffset[0];
+  let offset = blOffset[1];
+
+  for (let i = 0; i < bufferId; i++) {
+    offset += this._bufs[i].length;
+  }
+
+  return offset
+};
+
+BufferList$1.prototype.get = function get (index) {
+  if (index > this.length || index < 0) {
+    return undefined
+  }
+
+  const offset = this._offset(index);
+
+  return this._bufs[offset[0]][offset[1]]
+};
+
+BufferList$1.prototype.slice = function slice (start, end) {
+  if (typeof start === 'number' && start < 0) {
+    start += this.length;
+  }
+
+  if (typeof end === 'number' && end < 0) {
+    end += this.length;
+  }
+
+  return this.copy(null, 0, start, end)
+};
+
+BufferList$1.prototype.copy = function copy (dst, dstStart, srcStart, srcEnd) {
+  if (typeof srcStart !== 'number' || srcStart < 0) {
+    srcStart = 0;
+  }
+
+  if (typeof srcEnd !== 'number' || srcEnd > this.length) {
+    srcEnd = this.length;
+  }
+
+  if (srcStart >= this.length) {
+    return dst || Buffer$1.alloc(0)
+  }
+
+  if (srcEnd <= 0) {
+    return dst || Buffer$1.alloc(0)
+  }
+
+  const copy = !!dst;
+  const off = this._offset(srcStart);
+  const len = srcEnd - srcStart;
+  let bytes = len;
+  let bufoff = (copy && dstStart) || 0;
+  let start = off[1];
+
+  // copy/slice everything
+  if (srcStart === 0 && srcEnd === this.length) {
+    if (!copy) {
+      // slice, but full concat if multiple buffers
+      return this._bufs.length === 1
+        ? this._bufs[0]
+        : Buffer$1.concat(this._bufs, this.length)
+    }
+
+    // copy, need to copy individual buffers
+    for (let i = 0; i < this._bufs.length; i++) {
+      this._bufs[i].copy(dst, bufoff);
+      bufoff += this._bufs[i].length;
+    }
+
+    return dst
+  }
+
+  // easy, cheap case where it's a subset of one of the buffers
+  if (bytes <= this._bufs[off[0]].length - start) {
+    return copy
+      ? this._bufs[off[0]].copy(dst, dstStart, start, start + bytes)
+      : this._bufs[off[0]].slice(start, start + bytes)
+  }
+
+  if (!copy) {
+    // a slice, we need something to copy in to
+    dst = Buffer$1.allocUnsafe(len);
+  }
+
+  for (let i = off[0]; i < this._bufs.length; i++) {
+    const l = this._bufs[i].length - start;
+
+    if (bytes > l) {
+      this._bufs[i].copy(dst, bufoff, start);
+      bufoff += l;
+    } else {
+      this._bufs[i].copy(dst, bufoff, start, start + bytes);
+      bufoff += l;
+      break
+    }
+
+    bytes -= l;
+
+    if (start) {
+      start = 0;
+    }
+  }
+
+  // safeguard so that we don't return uninitialized memory
+  if (dst.length > bufoff) return dst.slice(0, bufoff)
+
+  return dst
+};
+
+BufferList$1.prototype.shallowSlice = function shallowSlice (start, end) {
+  start = start || 0;
+  end = typeof end !== 'number' ? this.length : end;
+
+  if (start < 0) {
+    start += this.length;
+  }
+
+  if (end < 0) {
+    end += this.length;
+  }
+
+  if (start === end) {
+    return this._new()
+  }
+
+  const startOffset = this._offset(start);
+  const endOffset = this._offset(end);
+  const buffers = this._bufs.slice(startOffset[0], endOffset[0] + 1);
+
+  if (endOffset[1] === 0) {
+    buffers.pop();
+  } else {
+    buffers[buffers.length - 1] = buffers[buffers.length - 1].slice(0, endOffset[1]);
+  }
+
+  if (startOffset[1] !== 0) {
+    buffers[0] = buffers[0].slice(startOffset[1]);
+  }
+
+  return this._new(buffers)
+};
+
+BufferList$1.prototype.toString = function toString (encoding, start, end) {
+  return this.slice(start, end).toString(encoding)
+};
+
+BufferList$1.prototype.consume = function consume (bytes) {
+  // first, normalize the argument, in accordance with how Buffer does it
+  bytes = Math.trunc(bytes);
+  // do nothing if not a positive number
+  if (Number.isNaN(bytes) || bytes <= 0) return this
+
+  while (this._bufs.length) {
+    if (bytes >= this._bufs[0].length) {
+      bytes -= this._bufs[0].length;
+      this.length -= this._bufs[0].length;
+      this._bufs.shift();
+    } else {
+      this._bufs[0] = this._bufs[0].slice(bytes);
+      this.length -= bytes;
+      break
+    }
+  }
+
+  return this
+};
+
+BufferList$1.prototype.duplicate = function duplicate () {
+  const copy = this._new();
+
+  for (let i = 0; i < this._bufs.length; i++) {
+    copy.append(this._bufs[i]);
+  }
+
+  return copy
+};
+
+BufferList$1.prototype.append = function append (buf) {
+  if (buf == null) {
+    return this
+  }
+
+  if (buf.buffer) {
+    // append a view of the underlying ArrayBuffer
+    this._appendBuffer(Buffer$1.from(buf.buffer, buf.byteOffset, buf.byteLength));
+  } else if (Array.isArray(buf)) {
+    for (let i = 0; i < buf.length; i++) {
+      this.append(buf[i]);
+    }
+  } else if (this._isBufferList(buf)) {
+    // unwrap argument into individual BufferLists
+    for (let i = 0; i < buf._bufs.length; i++) {
+      this.append(buf._bufs[i]);
+    }
+  } else {
+    // coerce number arguments to strings, since Buffer(number) does
+    // uninitialized memory allocation
+    if (typeof buf === 'number') {
+      buf = buf.toString();
+    }
+
+    this._appendBuffer(Buffer$1.from(buf));
+  }
+
+  return this
+};
+
+BufferList$1.prototype._appendBuffer = function appendBuffer (buf) {
+  this._bufs.push(buf);
+  this.length += buf.length;
+};
+
+BufferList$1.prototype.indexOf = function (search, offset, encoding) {
+  if (encoding === undefined && typeof offset === 'string') {
+    encoding = offset;
+    offset = undefined;
+  }
+
+  if (typeof search === 'function' || Array.isArray(search)) {
+    throw new TypeError('The "value" argument must be one of type string, Buffer, BufferList, or Uint8Array.')
+  } else if (typeof search === 'number') {
+    search = Buffer$1.from([search]);
+  } else if (typeof search === 'string') {
+    search = Buffer$1.from(search, encoding);
+  } else if (this._isBufferList(search)) {
+    search = search.slice();
+  } else if (Array.isArray(search.buffer)) {
+    search = Buffer$1.from(search.buffer, search.byteOffset, search.byteLength);
+  } else if (!Buffer$1.isBuffer(search)) {
+    search = Buffer$1.from(search);
+  }
+
+  offset = Number(offset || 0);
+
+  if (isNaN(offset)) {
+    offset = 0;
+  }
+
+  if (offset < 0) {
+    offset = this.length + offset;
+  }
+
+  if (offset < 0) {
+    offset = 0;
+  }
+
+  if (search.length === 0) {
+    return offset > this.length ? this.length : offset
+  }
+
+  const blOffset = this._offset(offset);
+  let blIndex = blOffset[0]; // index of which internal buffer we're working on
+  let buffOffset = blOffset[1]; // offset of the internal buffer we're working on
+
+  // scan over each buffer
+  for (; blIndex < this._bufs.length; blIndex++) {
+    const buff = this._bufs[blIndex];
+
+    while (buffOffset < buff.length) {
+      const availableWindow = buff.length - buffOffset;
+
+      if (availableWindow >= search.length) {
+        const nativeSearchResult = buff.indexOf(search, buffOffset);
+
+        if (nativeSearchResult !== -1) {
+          return this._reverseOffset([blIndex, nativeSearchResult])
+        }
+
+        buffOffset = buff.length - search.length + 1; // end of native search window
+      } else {
+        const revOffset = this._reverseOffset([blIndex, buffOffset]);
+
+        if (this._match(revOffset, search)) {
+          return revOffset
+        }
+
+        buffOffset++;
+      }
+    }
+
+    buffOffset = 0;
+  }
+
+  return -1
+};
+
+BufferList$1.prototype._match = function (offset, search) {
+  if (this.length - offset < search.length) {
+    return false
+  }
+
+  for (let searchOffset = 0; searchOffset < search.length; searchOffset++) {
+    if (this.get(offset + searchOffset) !== search[searchOffset]) {
+      return false
+    }
+  }
+  return true
+}
+
+;(function () {
+  const methods = {
+    readDoubleBE: 8,
+    readDoubleLE: 8,
+    readFloatBE: 4,
+    readFloatLE: 4,
+    readInt32BE: 4,
+    readInt32LE: 4,
+    readUInt32BE: 4,
+    readUInt32LE: 4,
+    readInt16BE: 2,
+    readInt16LE: 2,
+    readUInt16BE: 2,
+    readUInt16LE: 2,
+    readInt8: 1,
+    readUInt8: 1,
+    readIntBE: null,
+    readIntLE: null,
+    readUIntBE: null,
+    readUIntLE: null
+  };
+
+  for (const m in methods) {
+    (function (m) {
+      if (methods[m] === null) {
+        BufferList$1.prototype[m] = function (offset, byteLength) {
+          return this.slice(offset, offset + byteLength)[m](0, byteLength)
+        };
+      } else {
+        BufferList$1.prototype[m] = function (offset = 0) {
+          return this.slice(offset, offset + methods[m])[m](0)
+        };
+      }
+    }(m));
+  }
+}());
+
+// Used internally by the class and also as an indicator of this object being
+// a `BufferList`. It's not possible to use `instanceof BufferList` in a browser
+// environment because there could be multiple different copies of the
+// BufferList class and some `BufferList`s might be `BufferList`s.
+BufferList$1.prototype._isBufferList = function _isBufferList (b) {
+  return b instanceof BufferList$1 || BufferList$1.isBufferList(b)
+};
+
+BufferList$1.isBufferList = function isBufferList (b) {
+  return b != null && b[symbol]
+};
+
+var BufferList_1 = BufferList$1;
+
+const DuplexStream = readableExports.Duplex;
+const inherits = inheritsExports;
+const BufferList = BufferList_1;
+
+function BufferListStream$1 (callback) {
+  if (!(this instanceof BufferListStream$1)) {
+    return new BufferListStream$1(callback)
+  }
+
+  if (typeof callback === 'function') {
+    this._callback = callback;
+
+    const piper = function piper (err) {
+      if (this._callback) {
+        this._callback(err);
+        this._callback = null;
+      }
+    }.bind(this);
+
+    this.on('pipe', function onPipe (src) {
+      src.on('error', piper);
+    });
+    this.on('unpipe', function onUnpipe (src) {
+      src.removeListener('error', piper);
+    });
+
+    callback = null;
+  }
+
+  BufferList._init.call(this, callback);
+  DuplexStream.call(this);
+}
+
+inherits(BufferListStream$1, DuplexStream);
+Object.assign(BufferListStream$1.prototype, BufferList.prototype);
+
+BufferListStream$1.prototype._new = function _new (callback) {
+  return new BufferListStream$1(callback)
+};
+
+BufferListStream$1.prototype._write = function _write (buf, encoding, callback) {
+  this._appendBuffer(buf);
+
+  if (typeof callback === 'function') {
+    callback();
+  }
+};
+
+BufferListStream$1.prototype._read = function _read (size) {
+  if (!this.length) {
+    return this.push(null)
+  }
+
+  size = Math.min(size, this.length);
+  this.push(this.slice(0, size));
+  this.consume(size);
+};
+
+BufferListStream$1.prototype.end = function end (chunk) {
+  DuplexStream.prototype.end.call(this, chunk);
+
+  if (this._callback) {
+    this._callback(null, this.slice());
+    this._callback = null;
+  }
+};
+
+BufferListStream$1.prototype._destroy = function _destroy (err, cb) {
+  this._bufs.length = 0;
+  this.length = 0;
+  cb(err);
+};
+
+BufferListStream$1.prototype._isBufferList = function _isBufferList (b) {
+  return b instanceof BufferListStream$1 || b instanceof BufferList || BufferListStream$1.isBufferList(b)
+};
+
+BufferListStream$1.isBufferList = BufferList.isBufferList;
+
+bl.exports = BufferListStream$1;
+bl.exports.BufferListStream = BufferListStream$1;
+bl.exports.BufferList = BufferList;
+
+var blExports = bl.exports;
+
+const readline = require$$0$8;
+const chalk = source;
+const cliCursor = cliCursor$1;
+const cliSpinners = cliSpinners$1;
+const logSymbols = logSymbols$1;
+const stripAnsi = stripAnsi$3;
+const wcwidth = wcwidthExports;
+const isInteractive = isInteractive$1;
+const isUnicodeSupported = isUnicodeSupported$2;
+const {BufferListStream} = blExports;
+
+const TEXT = Symbol('text');
+const PREFIX_TEXT = Symbol('prefixText');
+const ASCII_ETX_CODE = 0x03; // Ctrl+C emits this code
+
+class StdinDiscarder {
+	constructor() {
+		this.requests = 0;
+
+		this.mutedStream = new BufferListStream();
+		this.mutedStream.pipe(process.stdout);
+
+		const self = this; // eslint-disable-line unicorn/no-this-assignment
+		this.ourEmit = function (event, data, ...args) {
+			const {stdin} = process;
+			if (self.requests > 0 || stdin.emit === self.ourEmit) {
+				if (event === 'keypress') { // Fixes readline behavior
+					return;
 				}
 
-				chunks.push(buildStyle(chalk, styles)(chunk.join('')));
-				chunk = [];
-				styles.pop();
+				if (event === 'data' && data.includes(ASCII_ETX_CODE)) {
+					process.emit('SIGINT');
+				}
+
+				Reflect.apply(self.oldEmit, this, [event, data, ...args]);
 			} else {
-				chunk.push(character);
+				Reflect.apply(process.stdin.emit, this, [event, data, ...args]);
 			}
+		};
+	}
+
+	start() {
+		this.requests++;
+
+		if (this.requests === 1) {
+			this.realStart();
+		}
+	}
+
+	stop() {
+		if (this.requests <= 0) {
+			throw new Error('`stop` called more times than `start`');
+		}
+
+		this.requests--;
+
+		if (this.requests === 0) {
+			this.realStop();
+		}
+	}
+
+	realStart() {
+		// No known way to make it work reliably on Windows
+		if (process.platform === 'win32') {
+			return;
+		}
+
+		this.rl = readline.createInterface({
+			input: process.stdin,
+			output: this.mutedStream
 		});
 
-		chunks.push(chunk.join(''));
-
-		if (styles.length > 0) {
-			const errMessage = `Chalk template literal is missing ${styles.length} closing bracket${styles.length === 1 ? '' : 's'} (\`}\`)`;
-			throw new Error(errMessage);
-		}
-
-		return chunks.join('');
-	};
-	return templates;
-}
-
-const ansiStyles = ansiStylesExports;
-const {stdout: stdoutColor, stderr: stderrColor} = supportsColor_1;
-const {
-	stringReplaceAll,
-	stringEncaseCRLFWithFirstIndex
-} = util;
-
-const {isArray} = Array;
-
-// `supportsColor.level` → `ansiStyles.color[name]` mapping
-const levelMapping = [
-	'ansi',
-	'ansi',
-	'ansi256',
-	'ansi16m'
-];
-
-const styles = Object.create(null);
-
-const applyOptions = (object, options = {}) => {
-	if (options.level && !(Number.isInteger(options.level) && options.level >= 0 && options.level <= 3)) {
-		throw new Error('The `level` option should be an integer from 0 to 3');
+		this.rl.on('SIGINT', () => {
+			if (process.listenerCount('SIGINT') === 0) {
+				process.emit('SIGINT');
+			} else {
+				this.rl.close();
+				process.kill(process.pid, 'SIGINT');
+			}
+		});
 	}
 
-	// Detect level if not set manually
-	const colorLevel = stdoutColor ? stdoutColor.level : 0;
-	object.level = options.level === undefined ? colorLevel : options.level;
-};
+	realStop() {
+		if (process.platform === 'win32') {
+			return;
+		}
 
-class ChalkClass {
+		this.rl.close();
+		this.rl = undefined;
+	}
+}
+
+let stdinDiscarder;
+
+class Ora {
 	constructor(options) {
-		// eslint-disable-next-line no-constructor-return
-		return chalkFactory(options);
-	}
-}
-
-const chalkFactory = options => {
-	const chalk = {};
-	applyOptions(chalk, options);
-
-	chalk.template = (...arguments_) => chalkTag(chalk.template, ...arguments_);
-
-	Object.setPrototypeOf(chalk, Chalk.prototype);
-	Object.setPrototypeOf(chalk.template, chalk);
-
-	chalk.template.constructor = () => {
-		throw new Error('`chalk.constructor()` is deprecated. Use `new chalk.Instance()` instead.');
-	};
-
-	chalk.template.Instance = ChalkClass;
-
-	return chalk.template;
-};
-
-function Chalk(options) {
-	return chalkFactory(options);
-}
-
-for (const [styleName, style] of Object.entries(ansiStyles)) {
-	styles[styleName] = {
-		get() {
-			const builder = createBuilder(this, createStyler(style.open, style.close, this._styler), this._isEmpty);
-			Object.defineProperty(this, styleName, {value: builder});
-			return builder;
+		if (!stdinDiscarder) {
+			stdinDiscarder = new StdinDiscarder();
 		}
-	};
-}
 
-styles.visible = {
-	get() {
-		const builder = createBuilder(this, this._styler, true);
-		Object.defineProperty(this, 'visible', {value: builder});
-		return builder;
-	}
-};
-
-const usedModels = ['rgb', 'hex', 'keyword', 'hsl', 'hsv', 'hwb', 'ansi', 'ansi256'];
-
-for (const model of usedModels) {
-	styles[model] = {
-		get() {
-			const {level} = this;
-			return function (...arguments_) {
-				const styler = createStyler(ansiStyles.color[levelMapping[level]][model](...arguments_), ansiStyles.color.close, this._styler);
-				return createBuilder(this, styler, this._isEmpty);
+		if (typeof options === 'string') {
+			options = {
+				text: options
 			};
 		}
-	};
+
+		this.options = {
+			text: '',
+			color: 'cyan',
+			stream: process.stderr,
+			discardStdin: true,
+			...options
+		};
+
+		this.spinner = this.options.spinner;
+
+		this.color = this.options.color;
+		this.hideCursor = this.options.hideCursor !== false;
+		this.interval = this.options.interval || this.spinner.interval || 100;
+		this.stream = this.options.stream;
+		this.id = undefined;
+		this.isEnabled = typeof this.options.isEnabled === 'boolean' ? this.options.isEnabled : isInteractive({stream: this.stream});
+		this.isSilent = typeof this.options.isSilent === 'boolean' ? this.options.isSilent : false;
+
+		// Set *after* `this.stream`
+		this.text = this.options.text;
+		this.prefixText = this.options.prefixText;
+		this.linesToClear = 0;
+		this.indent = this.options.indent;
+		this.discardStdin = this.options.discardStdin;
+		this.isDiscardingStdin = false;
+	}
+
+	get indent() {
+		return this._indent;
+	}
+
+	set indent(indent = 0) {
+		if (!(indent >= 0 && Number.isInteger(indent))) {
+			throw new Error('The `indent` option must be an integer from 0 and up');
+		}
+
+		this._indent = indent;
+	}
+
+	_updateInterval(interval) {
+		if (interval !== undefined) {
+			this.interval = interval;
+		}
+	}
+
+	get spinner() {
+		return this._spinner;
+	}
+
+	set spinner(spinner) {
+		this.frameIndex = 0;
+
+		if (typeof spinner === 'object') {
+			if (spinner.frames === undefined) {
+				throw new Error('The given spinner must have a `frames` property');
+			}
+
+			this._spinner = spinner;
+		} else if (!isUnicodeSupported()) {
+			this._spinner = cliSpinners.line;
+		} else if (spinner === undefined) {
+			// Set default spinner
+			this._spinner = cliSpinners.dots;
+		} else if (spinner !== 'default' && cliSpinners[spinner]) {
+			this._spinner = cliSpinners[spinner];
+		} else {
+			throw new Error(`There is no built-in spinner named '${spinner}'. See https://github.com/sindresorhus/cli-spinners/blob/main/spinners.json for a full list.`);
+		}
+
+		this._updateInterval(this._spinner.interval);
+	}
+
+	get text() {
+		return this[TEXT];
+	}
+
+	set text(value) {
+		this[TEXT] = value;
+		this.updateLineCount();
+	}
+
+	get prefixText() {
+		return this[PREFIX_TEXT];
+	}
+
+	set prefixText(value) {
+		this[PREFIX_TEXT] = value;
+		this.updateLineCount();
+	}
+
+	get isSpinning() {
+		return this.id !== undefined;
+	}
+
+	getFullPrefixText(prefixText = this[PREFIX_TEXT], postfix = ' ') {
+		if (typeof prefixText === 'string') {
+			return prefixText + postfix;
+		}
+
+		if (typeof prefixText === 'function') {
+			return prefixText() + postfix;
+		}
+
+		return '';
+	}
+
+	updateLineCount() {
+		const columns = this.stream.columns || 80;
+		const fullPrefixText = this.getFullPrefixText(this.prefixText, '-');
+		this.lineCount = 0;
+		for (const line of stripAnsi(fullPrefixText + '--' + this[TEXT]).split('\n')) {
+			this.lineCount += Math.max(1, Math.ceil(wcwidth(line) / columns));
+		}
+	}
+
+	get isEnabled() {
+		return this._isEnabled && !this.isSilent;
+	}
+
+	set isEnabled(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isEnabled` option must be a boolean');
+		}
+
+		this._isEnabled = value;
+	}
+
+	get isSilent() {
+		return this._isSilent;
+	}
+
+	set isSilent(value) {
+		if (typeof value !== 'boolean') {
+			throw new TypeError('The `isSilent` option must be a boolean');
+		}
+
+		this._isSilent = value;
+	}
+
+	frame() {
+		const {frames} = this.spinner;
+		let frame = frames[this.frameIndex];
+
+		if (this.color) {
+			frame = chalk[this.color](frame);
+		}
+
+		this.frameIndex = ++this.frameIndex % frames.length;
+		const fullPrefixText = (typeof this.prefixText === 'string' && this.prefixText !== '') ? this.prefixText + ' ' : '';
+		const fullText = typeof this.text === 'string' ? ' ' + this.text : '';
+
+		return fullPrefixText + frame + fullText;
+	}
+
+	clear() {
+		if (!this.isEnabled || !this.stream.isTTY) {
+			return this;
+		}
+
+		for (let i = 0; i < this.linesToClear; i++) {
+			if (i > 0) {
+				this.stream.moveCursor(0, -1);
+			}
+
+			this.stream.clearLine();
+			this.stream.cursorTo(this.indent);
+		}
+
+		this.linesToClear = 0;
+
+		return this;
+	}
+
+	render() {
+		if (this.isSilent) {
+			return this;
+		}
+
+		this.clear();
+		this.stream.write(this.frame());
+		this.linesToClear = this.lineCount;
+
+		return this;
+	}
+
+	start(text) {
+		if (text) {
+			this.text = text;
+		}
+
+		if (this.isSilent) {
+			return this;
+		}
+
+		if (!this.isEnabled) {
+			if (this.text) {
+				this.stream.write(`- ${this.text}\n`);
+			}
+
+			return this;
+		}
+
+		if (this.isSpinning) {
+			return this;
+		}
+
+		if (this.hideCursor) {
+			cliCursor.hide(this.stream);
+		}
+
+		if (this.discardStdin && process.stdin.isTTY) {
+			this.isDiscardingStdin = true;
+			stdinDiscarder.start();
+		}
+
+		this.render();
+		this.id = setInterval(this.render.bind(this), this.interval);
+
+		return this;
+	}
+
+	stop() {
+		if (!this.isEnabled) {
+			return this;
+		}
+
+		clearInterval(this.id);
+		this.id = undefined;
+		this.frameIndex = 0;
+		this.clear();
+		if (this.hideCursor) {
+			cliCursor.show(this.stream);
+		}
+
+		if (this.discardStdin && process.stdin.isTTY && this.isDiscardingStdin) {
+			stdinDiscarder.stop();
+			this.isDiscardingStdin = false;
+		}
+
+		return this;
+	}
+
+	succeed(text) {
+		return this.stopAndPersist({symbol: logSymbols.success, text});
+	}
+
+	fail(text) {
+		return this.stopAndPersist({symbol: logSymbols.error, text});
+	}
+
+	warn(text) {
+		return this.stopAndPersist({symbol: logSymbols.warning, text});
+	}
+
+	info(text) {
+		return this.stopAndPersist({symbol: logSymbols.info, text});
+	}
+
+	stopAndPersist(options = {}) {
+		if (this.isSilent) {
+			return this;
+		}
+
+		const prefixText = options.prefixText || this.prefixText;
+		const text = options.text || this.text;
+		const fullText = (typeof text === 'string') ? ' ' + text : '';
+
+		this.stop();
+		this.stream.write(`${this.getFullPrefixText(prefixText, ' ')}${options.symbol || ' '}${fullText}\n`);
+
+		return this;
+	}
 }
 
-for (const model of usedModels) {
-	const bgModel = 'bg' + model[0].toUpperCase() + model.slice(1);
-	styles[bgModel] = {
-		get() {
-			const {level} = this;
-			return function (...arguments_) {
-				const styler = createStyler(ansiStyles.bgColor[levelMapping[level]][model](...arguments_), ansiStyles.bgColor.close, this._styler);
-				return createBuilder(this, styler, this._isEmpty);
-			};
-		}
-	};
-}
-
-const proto = Object.defineProperties(() => {}, {
-	...styles,
-	level: {
-		enumerable: true,
-		get() {
-			return this._generator.level;
-		},
-		set(level) {
-			this._generator.level = level;
-		}
-	}
-});
-
-const createStyler = (open, close, parent) => {
-	let openAll;
-	let closeAll;
-	if (parent === undefined) {
-		openAll = open;
-		closeAll = close;
-	} else {
-		openAll = parent.openAll + open;
-		closeAll = close + parent.closeAll;
-	}
-
-	return {
-		open,
-		close,
-		openAll,
-		closeAll,
-		parent
-	};
+const oraFactory = function (options) {
+	return new Ora(options);
 };
 
-const createBuilder = (self, _styler, _isEmpty) => {
-	const builder = (...arguments_) => {
-		if (isArray(arguments_[0]) && isArray(arguments_[0].raw)) {
-			// Called as a template literal, for example: chalk.red`2 + 3 = {bold ${2+3}}`
-			return applyStyle(builder, chalkTag(builder, ...arguments_));
+ora$1.exports = oraFactory;
+
+ora$1.exports.promise = (action, options) => {
+	// eslint-disable-next-line promise/prefer-await-to-then
+	if (typeof action.then !== 'function') {
+		throw new TypeError('Parameter `action` must be a Promise');
+	}
+
+	const spinner = new Ora(options);
+	spinner.start();
+
+	(async () => {
+		try {
+			await action;
+			spinner.succeed();
+		} catch {
+			spinner.fail();
 		}
+	})();
 
-		// Single argument is hot path, implicit coercion is faster than anything
-		// eslint-disable-next-line no-implicit-coercion
-		return applyStyle(builder, (arguments_.length === 1) ? ('' + arguments_[0]) : arguments_.join(' '));
-	};
-
-	// We alter the prototype because we must return a function, but there is
-	// no way to create a function with a different prototype
-	Object.setPrototypeOf(builder, proto);
-
-	builder._generator = self;
-	builder._styler = _styler;
-	builder._isEmpty = _isEmpty;
-
-	return builder;
+	return spinner;
 };
 
-const applyStyle = (self, string) => {
-	if (self.level <= 0 || !string) {
-		return self._isEmpty ? '' : string;
-	}
-
-	let styler = self._styler;
-
-	if (styler === undefined) {
-		return string;
-	}
-
-	const {openAll, closeAll} = styler;
-	if (string.indexOf('\u001B') !== -1) {
-		while (styler !== undefined) {
-			// Replace any instances already present with a re-opening code
-			// otherwise only the part of the string until said closing code
-			// will be colored, and the rest will simply be 'plain'.
-			string = stringReplaceAll(string, styler.close, styler.open);
-
-			styler = styler.parent;
-		}
-	}
-
-	// We can move both next actions out of loop, because remaining actions in loop won't have
-	// any/visible effect on parts we add here. Close the styling before a linebreak and reopen
-	// after next line to fix a bleed issue on macOS: https://github.com/chalk/chalk/pull/92
-	const lfIndex = string.indexOf('\n');
-	if (lfIndex !== -1) {
-		string = stringEncaseCRLFWithFirstIndex(string, closeAll, openAll, lfIndex);
-	}
-
-	return openAll + string + closeAll;
-};
-
-let template;
-const chalkTag = (chalk, ...strings) => {
-	const [firstString] = strings;
-
-	if (!isArray(firstString) || !isArray(firstString.raw)) {
-		// If chalk() was called by itself or with a string,
-		// return the string itself as a string.
-		return strings.join(' ');
-	}
-
-	const arguments_ = strings.slice(1);
-	const parts = [firstString.raw[0]];
-
-	for (let i = 1; i < firstString.length; i++) {
-		parts.push(
-			String(arguments_[i - 1]).replace(/[{}\\]/g, '\\$&'),
-			String(firstString.raw[i])
-		);
-	}
-
-	if (template === undefined) {
-		template = requireTemplates();
-	}
-
-	return template(chalk, parts.join(''));
-};
-
-Object.defineProperties(Chalk.prototype, styles);
-
-const chalk = Chalk(); // eslint-disable-line new-cap
-chalk.supportsColor = stdoutColor;
-chalk.stderr = Chalk({level: stderrColor ? stderrColor.level : 0}); // eslint-disable-line new-cap
-chalk.stderr.supportsColor = stderrColor;
-
-var source = chalk;
-
-var chalk$1 = /*@__PURE__*/getDefaultExportFromCjs(source);
+var oraExports = ora$1.exports;
+var ora = /*@__PURE__*/getDefaultExportFromCjs(oraExports);
 
 const log = console.log;
 log(chalk$1.blue('Hello') + ' World' + chalk$1.red('!'));
+ora('Loading unicorns').start();
 program
     .option('-d, --debug', 'output extra debugging')
     .option('-s, --small', 'small pizza size')
@@ -8979,6 +11211,10 @@ program
 // program.version('0.0.2');
 const dirName = await input({ message: 'Enter your dirName', required: true });
 console.log('dirName', dirName);
+const spinner = ora('Loading unicorns').start();
+setTimeout(() => {
+    spinner.succeed('成功');
+}, 1000);
 // download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
 //   console.log('download', err);
 // })

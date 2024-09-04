@@ -2,19 +2,12 @@
 import { program } from "commander";
 import download from 'download-git-repo'
 import { input } from '@inquirer/prompts';
-import ora from "ora";
+import ora from "ora"; //3.4.0 8.1.0
 import chalk from 'chalk'
 
 const log = console.log;
 log(chalk.blue('Hello') + ' World' + chalk.red('!'));
 
-// console.log(ora)
-// const spinner = ora('Loading unicorns').start();
-
-// setTimeout(() => {
-// 	spinner.color = 'yellow';
-// 	spinner.text = 'Loading rainbows';
-// }, 1000);
 
 interface MyAnswers {
   name: string;
@@ -30,7 +23,11 @@ program
 
 const dirName = await input({ message: 'Enter your dirName', required: true });
 console.log('dirName', dirName);
+const spinner = ora('Loading unicorns').start();
 
+setTimeout(() => {
+	spinner.succeed('成功')
+}, 1000);
 // download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
 //   console.log('download', err);
 // })
