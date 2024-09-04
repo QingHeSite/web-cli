@@ -8,7 +8,8 @@ import chalk from 'chalk'
 const log = console.log;
 log(chalk.blue('Hello') + ' World' + chalk.red('!'));
 
-const spinner = ora('Loading unicorns').start();
+// console.log(ora)
+// const spinner = ora('Loading unicorns').start();
 
 // setTimeout(() => {
 // 	spinner.color = 'yellow';

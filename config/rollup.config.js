@@ -12,7 +12,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const env = process.env.NODE_ENV // umd 模式的编译结果文件输出的全局变量名称
+const env = process.env.NODE_ENV
 console.log('env', env)
 
 const config = {
@@ -26,14 +26,15 @@ const config = {
     // },
     {
       file: 'dist/index.esm.js',
-      format: 'es',
+      format: 'esm',
+      sourcemap: true // 生成 sourcemap 文件
     }
   ],
   plugins: [typescript(), babel({
     babelHelpers: 'bundled',
     // 过滤文件
     exclude: "node_modules/**",
-  }), resolve({preferBuiltins: true,}), commonjs(), json()],
+  }), resolve({preferBuiltins: true,browser: false}), commonjs(), json()],
   external: ['electron'],
 }
 if (env === 'production') {

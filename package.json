@@ -23,7 +23,6 @@
     "@rollup/plugin-json": "^6.1.0",
     "@types/commander": "^2.12.2",
     "@types/inquirer": "^9.0.7",
-    "chalk": "^4.1.2",
     "rollup": "^4.21.2"
   },
   "dependencies": {
@@ -37,7 +36,8 @@
     "download-git-repo": "^3.0.2",
     "electron": "^32.0.1",
     "inquirer": "^10.1.8",
-    "ora": "^8.1.0",
-    "rollup-plugin-typescript2": "^0.36.0"
+    "ora": "5.4.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "chalk": "^4.1.2"
   }
 }
