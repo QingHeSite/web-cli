@@ -11,13 +11,29 @@ import { execSync } from 'child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import process$3 from 'process';
+import process$4 from 'process';
 import require$$0$8 from 'fs';
 import * as readline$2 from 'node:readline';
 import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
 import require$$0$1 from 'node:tty';
+import process$3 from 'node:process';
 
+const isUpKey = (key) => 
+// The up key
+key.name === 'up' ||
+    // Vim keybinding
+    key.name === 'k' ||
+    // Emacs keybinding
+    (key.ctrl && key.name === 'p');
+const isDownKey = (key) => 
+// The down key
+key.name === 'down' ||
+    // Vim keybinding
+    key.name === 'j' ||
+    // Emacs keybinding
+    (key.ctrl && key.name === 'n');
 const isBackspaceKey = (key) => key.name === 'backspace';
+const isNumberKey = (key) => '123456789'.includes(key.name);
 const isEnterKey = (key) => key.name === 'enter' || key.name === 'return';
 
 class CancelPromptError extends Error {
@@ -2078,6 +2094,20 @@ function usePrefix({ isLoading = false, theme, }) {
     return prefix;
 }
 
+function useMemo(fn, dependencies) {
+    return withPointer((pointer) => {
+        const prev = pointer.get();
+        if (!prev ||
+            prev.dependencies.length !== dependencies.length ||
+            prev.dependencies.some((dep, i) => dep !== dependencies[i])) {
+            const value = fn();
+            pointer.set({ value, dependencies });
+            return value;
+        }
+        return prev.value;
+    });
+}
+
 function useRef(val) {
     return useState({ current: val })[0];
 }
@@ -3861,6 +3891,120 @@ function readlineWidth() {
     return cliWidth$1({ defaultWidth: 80, output: readline$1().output });
 }
 
+function split(content, width) {
+    return breakLines(content, width).split('\n');
+}
+/**
+ * Rotates an array of items by an integer number of positions.
+ * @param {number} count The number of positions to rotate by
+ * @param {T[]} items The items to rotate
+ */
+function rotate(count, items) {
+    const max = items.length;
+    const offset = ((count % max) + max) % max;
+    return [...items.slice(offset), ...items.slice(0, offset)];
+}
+/**
+ * Renders a page of items as lines that fit within the given width ensuring
+ * that the number of lines is not greater than the page size, and the active
+ * item renders at the provided position, while prioritizing that as many lines
+ * of the active item get rendered as possible.
+ */
+function lines({ items, width, renderItem, active, position: requested, pageSize, }) {
+    const layouts = items.map((item, index) => ({
+        item,
+        index,
+        isActive: index === active,
+    }));
+    const layoutsInPage = rotate(active - requested, layouts).slice(0, pageSize);
+    const renderItemAt = (index) => layoutsInPage[index] == null ? [] : split(renderItem(layoutsInPage[index]), width);
+    // Create a blank array of lines for the page
+    const pageBuffer = Array.from({ length: pageSize });
+    // Render the active item to decide the position
+    const activeItem = renderItemAt(requested).slice(0, pageSize);
+    const position = requested + activeItem.length <= pageSize ? requested : pageSize - activeItem.length;
+    // Add the lines of the active item into the page
+    pageBuffer.splice(position, activeItem.length, ...activeItem);
+    // Fill the page under the active item
+    let bufferPointer = position + activeItem.length;
+    let layoutPointer = requested + 1;
+    while (bufferPointer < pageSize && layoutPointer < layoutsInPage.length) {
+        for (const line of renderItemAt(layoutPointer)) {
+            pageBuffer[bufferPointer++] = line;
+            if (bufferPointer >= pageSize)
+                break;
+        }
+        layoutPointer++;
+    }
+    // Fill the page over the active item
+    bufferPointer = position - 1;
+    layoutPointer = requested - 1;
+    while (bufferPointer >= 0 && layoutPointer >= 0) {
+        for (const line of renderItemAt(layoutPointer).reverse()) {
+            pageBuffer[bufferPointer--] = line;
+            if (bufferPointer < 0)
+                break;
+        }
+        layoutPointer--;
+    }
+    return pageBuffer.filter((line) => typeof line === 'string');
+}
+
+/**
+ * Creates the next position for the active item considering a finite list of
+ * items to be rendered on a page.
+ */
+function finite({ active, pageSize, total, }) {
+    const middle = Math.floor(pageSize / 2);
+    if (total <= pageSize || active < middle)
+        return active;
+    if (active >= total - middle)
+        return active + pageSize - total;
+    return middle;
+}
+/**
+ * Creates the next position for the active item considering an infinitely
+ * looping list of items to be rendered on the page.
+ */
+function infinite({ active, lastActive, total, pageSize, pointer, }) {
+    if (total <= pageSize)
+        return active;
+    // Move the position only when the user moves down, and when the
+    // navigation fits within a single page
+    if (lastActive < active && active - lastActive < pageSize) {
+        // Limit it to the middle of the list
+        return Math.min(Math.floor(pageSize / 2), pointer + active - lastActive);
+    }
+    return pointer;
+}
+
+function usePagination({ items, active, renderItem, pageSize, loop = true, }) {
+    const state = useRef({ position: 0, lastActive: 0 });
+    const position = loop
+        ? infinite({
+            active,
+            lastActive: state.current.lastActive,
+            total: items.length,
+            pageSize,
+            pointer: state.current.position,
+        })
+        : finite({
+            active,
+            total: items.length,
+            pageSize,
+        });
+    state.current.position = position;
+    state.current.lastActive = active;
+    return lines({
+        items,
+        width: readlineWidth(),
+        renderItem,
+        active,
+        position,
+        pageSize,
+    }).join('\n');
+}
+
 class CancelablePromise extends Promise {
     cancel = () => { };
 }
@@ -4649,6 +4793,317 @@ function createPrompt(view) {
     return prompt;
 }
 
+// process.env dot-notation access prints:
+// Property 'TERM' comes from an index signature, so it must be accessed with ['TERM'].ts(4111)
+/* eslint dot-notation: ["off"] */
+// Ported from is-unicode-supported
+function isUnicodeSupported$3() {
+    if (process$3.platform !== 'win32') {
+        return process$3.env['TERM'] !== 'linux'; // Linux console (kernel)
+    }
+    return (Boolean(process$3.env['WT_SESSION']) || // Windows Terminal
+        Boolean(process$3.env['TERMINUS_SUBLIME']) || // Terminus (<0.2.27)
+        process$3.env['ConEmuTask'] === '{cmd::Cmder}' || // ConEmu and cmder
+        process$3.env['TERM_PROGRAM'] === 'Terminus-Sublime' ||
+        process$3.env['TERM_PROGRAM'] === 'vscode' ||
+        process$3.env['TERM'] === 'xterm-256color' ||
+        process$3.env['TERM'] === 'alacritty' ||
+        process$3.env['TERMINAL_EMULATOR'] === 'JetBrains-JediTerm');
+}
+// Ported from figures
+const common = {
+    circleQuestionMark: '(?)',
+    questionMarkPrefix: '(?)',
+    square: '█',
+    squareDarkShade: '▓',
+    squareMediumShade: '▒',
+    squareLightShade: '░',
+    squareTop: '▀',
+    squareBottom: '▄',
+    squareLeft: '▌',
+    squareRight: '▐',
+    squareCenter: '■',
+    bullet: '●',
+    dot: '․',
+    ellipsis: '…',
+    pointerSmall: '›',
+    triangleUp: '▲',
+    triangleUpSmall: '▴',
+    triangleDown: '▼',
+    triangleDownSmall: '▾',
+    triangleLeftSmall: '◂',
+    triangleRightSmall: '▸',
+    home: '⌂',
+    heart: '♥',
+    musicNote: '♪',
+    musicNoteBeamed: '♫',
+    arrowUp: '↑',
+    arrowDown: '↓',
+    arrowLeft: '←',
+    arrowRight: '→',
+    arrowLeftRight: '↔',
+    arrowUpDown: '↕',
+    almostEqual: '≈',
+    notEqual: '≠',
+    lessOrEqual: '≤',
+    greaterOrEqual: '≥',
+    identical: '≡',
+    infinity: '∞',
+    subscriptZero: '₀',
+    subscriptOne: '₁',
+    subscriptTwo: '₂',
+    subscriptThree: '₃',
+    subscriptFour: '₄',
+    subscriptFive: '₅',
+    subscriptSix: '₆',
+    subscriptSeven: '₇',
+    subscriptEight: '₈',
+    subscriptNine: '₉',
+    oneHalf: '½',
+    oneThird: '⅓',
+    oneQuarter: '¼',
+    oneFifth: '⅕',
+    oneSixth: '⅙',
+    oneEighth: '⅛',
+    twoThirds: '⅔',
+    twoFifths: '⅖',
+    threeQuarters: '¾',
+    threeFifths: '⅗',
+    threeEighths: '⅜',
+    fourFifths: '⅘',
+    fiveSixths: '⅚',
+    fiveEighths: '⅝',
+    sevenEighths: '⅞',
+    line: '─',
+    lineBold: '━',
+    lineDouble: '═',
+    lineDashed0: '┄',
+    lineDashed1: '┅',
+    lineDashed2: '┈',
+    lineDashed3: '┉',
+    lineDashed4: '╌',
+    lineDashed5: '╍',
+    lineDashed6: '╴',
+    lineDashed7: '╶',
+    lineDashed8: '╸',
+    lineDashed9: '╺',
+    lineDashed10: '╼',
+    lineDashed11: '╾',
+    lineDashed12: '−',
+    lineDashed13: '–',
+    lineDashed14: '‐',
+    lineDashed15: '⁃',
+    lineVertical: '│',
+    lineVerticalBold: '┃',
+    lineVerticalDouble: '║',
+    lineVerticalDashed0: '┆',
+    lineVerticalDashed1: '┇',
+    lineVerticalDashed2: '┊',
+    lineVerticalDashed3: '┋',
+    lineVerticalDashed4: '╎',
+    lineVerticalDashed5: '╏',
+    lineVerticalDashed6: '╵',
+    lineVerticalDashed7: '╷',
+    lineVerticalDashed8: '╹',
+    lineVerticalDashed9: '╻',
+    lineVerticalDashed10: '╽',
+    lineVerticalDashed11: '╿',
+    lineDownLeft: '┐',
+    lineDownLeftArc: '╮',
+    lineDownBoldLeftBold: '┓',
+    lineDownBoldLeft: '┒',
+    lineDownLeftBold: '┑',
+    lineDownDoubleLeftDouble: '╗',
+    lineDownDoubleLeft: '╖',
+    lineDownLeftDouble: '╕',
+    lineDownRight: '┌',
+    lineDownRightArc: '╭',
+    lineDownBoldRightBold: '┏',
+    lineDownBoldRight: '┎',
+    lineDownRightBold: '┍',
+    lineDownDoubleRightDouble: '╔',
+    lineDownDoubleRight: '╓',
+    lineDownRightDouble: '╒',
+    lineUpLeft: '┘',
+    lineUpLeftArc: '╯',
+    lineUpBoldLeftBold: '┛',
+    lineUpBoldLeft: '┚',
+    lineUpLeftBold: '┙',
+    lineUpDoubleLeftDouble: '╝',
+    lineUpDoubleLeft: '╜',
+    lineUpLeftDouble: '╛',
+    lineUpRight: '└',
+    lineUpRightArc: '╰',
+    lineUpBoldRightBold: '┗',
+    lineUpBoldRight: '┖',
+    lineUpRightBold: '┕',
+    lineUpDoubleRightDouble: '╚',
+    lineUpDoubleRight: '╙',
+    lineUpRightDouble: '╘',
+    lineUpDownLeft: '┤',
+    lineUpBoldDownBoldLeftBold: '┫',
+    lineUpBoldDownBoldLeft: '┨',
+    lineUpDownLeftBold: '┥',
+    lineUpBoldDownLeftBold: '┩',
+    lineUpDownBoldLeftBold: '┪',
+    lineUpDownBoldLeft: '┧',
+    lineUpBoldDownLeft: '┦',
+    lineUpDoubleDownDoubleLeftDouble: '╣',
+    lineUpDoubleDownDoubleLeft: '╢',
+    lineUpDownLeftDouble: '╡',
+    lineUpDownRight: '├',
+    lineUpBoldDownBoldRightBold: '┣',
+    lineUpBoldDownBoldRight: '┠',
+    lineUpDownRightBold: '┝',
+    lineUpBoldDownRightBold: '┡',
+    lineUpDownBoldRightBold: '┢',
+    lineUpDownBoldRight: '┟',
+    lineUpBoldDownRight: '┞',
+    lineUpDoubleDownDoubleRightDouble: '╠',
+    lineUpDoubleDownDoubleRight: '╟',
+    lineUpDownRightDouble: '╞',
+    lineDownLeftRight: '┬',
+    lineDownBoldLeftBoldRightBold: '┳',
+    lineDownLeftBoldRightBold: '┯',
+    lineDownBoldLeftRight: '┰',
+    lineDownBoldLeftBoldRight: '┱',
+    lineDownBoldLeftRightBold: '┲',
+    lineDownLeftRightBold: '┮',
+    lineDownLeftBoldRight: '┭',
+    lineDownDoubleLeftDoubleRightDouble: '╦',
+    lineDownDoubleLeftRight: '╥',
+    lineDownLeftDoubleRightDouble: '╤',
+    lineUpLeftRight: '┴',
+    lineUpBoldLeftBoldRightBold: '┻',
+    lineUpLeftBoldRightBold: '┷',
+    lineUpBoldLeftRight: '┸',
+    lineUpBoldLeftBoldRight: '┹',
+    lineUpBoldLeftRightBold: '┺',
+    lineUpLeftRightBold: '┶',
+    lineUpLeftBoldRight: '┵',
+    lineUpDoubleLeftDoubleRightDouble: '╩',
+    lineUpDoubleLeftRight: '╨',
+    lineUpLeftDoubleRightDouble: '╧',
+    lineUpDownLeftRight: '┼',
+    lineUpBoldDownBoldLeftBoldRightBold: '╋',
+    lineUpDownBoldLeftBoldRightBold: '╈',
+    lineUpBoldDownLeftBoldRightBold: '╇',
+    lineUpBoldDownBoldLeftRightBold: '╊',
+    lineUpBoldDownBoldLeftBoldRight: '╉',
+    lineUpBoldDownLeftRight: '╀',
+    lineUpDownBoldLeftRight: '╁',
+    lineUpDownLeftBoldRight: '┽',
+    lineUpDownLeftRightBold: '┾',
+    lineUpBoldDownBoldLeftRight: '╂',
+    lineUpDownLeftBoldRightBold: '┿',
+    lineUpBoldDownLeftBoldRight: '╃',
+    lineUpBoldDownLeftRightBold: '╄',
+    lineUpDownBoldLeftBoldRight: '╅',
+    lineUpDownBoldLeftRightBold: '╆',
+    lineUpDoubleDownDoubleLeftDoubleRightDouble: '╬',
+    lineUpDoubleDownDoubleLeftRight: '╫',
+    lineUpDownLeftDoubleRightDouble: '╪',
+    lineCross: '╳',
+    lineBackslash: '╲',
+    lineSlash: '╱',
+};
+const specialMainSymbols = {
+    tick: '✔',
+    info: 'ℹ',
+    warning: '⚠',
+    cross: '✘',
+    squareSmall: '◻',
+    squareSmallFilled: '◼',
+    circle: '◯',
+    circleFilled: '◉',
+    circleDotted: '◌',
+    circleDouble: '◎',
+    circleCircle: 'ⓞ',
+    circleCross: 'ⓧ',
+    circlePipe: 'Ⓘ',
+    radioOn: '◉',
+    radioOff: '◯',
+    checkboxOn: '☒',
+    checkboxOff: '☐',
+    checkboxCircleOn: 'ⓧ',
+    checkboxCircleOff: 'Ⓘ',
+    pointer: '❯',
+    triangleUpOutline: '△',
+    triangleLeft: '◀',
+    triangleRight: '▶',
+    lozenge: '◆',
+    lozengeOutline: '◇',
+    hamburger: '☰',
+    smiley: '㋡',
+    mustache: '෴',
+    star: '★',
+    play: '▶',
+    nodejs: '⬢',
+    oneSeventh: '⅐',
+    oneNinth: '⅑',
+    oneTenth: '⅒',
+};
+const specialFallbackSymbols = {
+    tick: '√',
+    info: 'i',
+    warning: '‼',
+    cross: '×',
+    squareSmall: '□',
+    squareSmallFilled: '■',
+    circle: '( )',
+    circleFilled: '(*)',
+    circleDotted: '( )',
+    circleDouble: '( )',
+    circleCircle: '(○)',
+    circleCross: '(×)',
+    circlePipe: '(│)',
+    radioOn: '(*)',
+    radioOff: '( )',
+    checkboxOn: '[×]',
+    checkboxOff: '[ ]',
+    checkboxCircleOn: '(×)',
+    checkboxCircleOff: '( )',
+    pointer: '>',
+    triangleUpOutline: '∆',
+    triangleLeft: '◄',
+    triangleRight: '►',
+    lozenge: '♦',
+    lozengeOutline: '◊',
+    hamburger: '≡',
+    smiley: '☺',
+    mustache: '┌─┐',
+    star: '✶',
+    play: '►',
+    nodejs: '♦',
+    oneSeventh: '1/7',
+    oneNinth: '1/9',
+    oneTenth: '1/10',
+};
+const mainSymbols = { ...common, ...specialMainSymbols };
+const fallbackSymbols = {
+    ...common,
+    ...specialFallbackSymbols,
+};
+const shouldUseMain = isUnicodeSupported$3();
+const figures = shouldUseMain ? mainSymbols : fallbackSymbols;
+
+/**
+ * Separator object
+ * Used to space/separate choices group
+ */
+class Separator {
+    separator = colors$1.dim(Array.from({ length: 15 }).join(figures.line));
+    type = 'separator';
+    constructor(separator) {
+        if (separator) {
+            this.separator = separator;
+        }
+    }
+    static isSeparator(choice) {
+        return Boolean(choice && choice.type === 'separator');
+    }
+}
+
 var input = createPrompt((config, done) => {
     const { required, validate = () => true } = config;
     const theme = makeTheme(config.theme);
@@ -4716,6 +5171,136 @@ var input = createPrompt((config, done) => {
             .join(' '),
         error,
     ];
+});
+
+const selectTheme = {
+    icon: { cursor: figures.pointer },
+    style: {
+        disabled: (text) => colors$1.dim(`- ${text}`),
+        description: (text) => colors$1.cyan(text),
+    },
+    helpMode: 'auto',
+};
+function isSelectable(item) {
+    return !Separator.isSeparator(item) && !item.disabled;
+}
+var select = createPrompt((config, done) => {
+    const { choices: items, loop = true, pageSize = 7 } = config;
+    const firstRender = useRef(true);
+    const theme = makeTheme(selectTheme, config.theme);
+    const prefix = usePrefix({ theme });
+    const [status, setStatus] = useState('pending');
+    const searchTimeoutRef = useRef();
+    const bounds = useMemo(() => {
+        const first = items.findIndex(isSelectable);
+        const last = items.findLastIndex(isSelectable);
+        if (first < 0) {
+            throw new ValidationError('[select prompt] No selectable choices. All choices are disabled.');
+        }
+        return { first, last };
+    }, [items]);
+    const defaultItemIndex = useMemo(() => {
+        if (!('default' in config))
+            return -1;
+        return items.findIndex((item) => isSelectable(item) && item.value === config.default);
+    }, [config.default, items]);
+    const [active, setActive] = useState(defaultItemIndex === -1 ? bounds.first : defaultItemIndex);
+    // Safe to assume the cursor position always point to a Choice.
+    const selectedChoice = items[active];
+    useKeypress((key, rl) => {
+        clearTimeout(searchTimeoutRef.current);
+        if (isEnterKey(key)) {
+            setStatus('done');
+            done(selectedChoice.value);
+        }
+        else if (isUpKey(key) || isDownKey(key)) {
+            rl.clearLine(0);
+            if (loop ||
+                (isUpKey(key) && active !== bounds.first) ||
+                (isDownKey(key) && active !== bounds.last)) {
+                const offset = isUpKey(key) ? -1 : 1;
+                let next = active;
+                do {
+                    next = (next + offset + items.length) % items.length;
+                } while (!isSelectable(items[next]));
+                setActive(next);
+            }
+        }
+        else if (isNumberKey(key)) {
+            rl.clearLine(0);
+            const position = Number(key.name) - 1;
+            const item = items[position];
+            if (item != null && isSelectable(item)) {
+                setActive(position);
+            }
+        }
+        else if (isBackspaceKey(key)) {
+            rl.clearLine(0);
+        }
+        else {
+            // Default to search
+            const searchTerm = rl.line.toLowerCase();
+            const matchIndex = items.findIndex((item) => {
+                if (Separator.isSeparator(item) || !isSelectable(item))
+                    return false;
+                return String(item.name || item.value)
+                    .toLowerCase()
+                    .startsWith(searchTerm);
+            });
+            if (matchIndex >= 0) {
+                setActive(matchIndex);
+            }
+            searchTimeoutRef.current = setTimeout(() => {
+                rl.clearLine(0);
+            }, 700);
+        }
+    });
+    useEffect(() => () => {
+        clearTimeout(searchTimeoutRef.current);
+    }, []);
+    const message = theme.style.message(config.message);
+    let helpTipTop = '';
+    let helpTipBottom = '';
+    if (theme.helpMode === 'always' ||
+        (theme.helpMode === 'auto' && firstRender.current)) {
+        firstRender.current = false;
+        if (items.length > pageSize) {
+            helpTipBottom = `\n${theme.style.help('(Use arrow keys to reveal more choices)')}`;
+        }
+        else {
+            helpTipTop = theme.style.help('(Use arrow keys)');
+        }
+    }
+    const page = usePagination({
+        items,
+        active,
+        renderItem({ item, isActive }) {
+            if (Separator.isSeparator(item)) {
+                return ` ${item.separator}`;
+            }
+            const line = String(item.name || item.value);
+            if (item.disabled) {
+                const disabledLabel = typeof item.disabled === 'string' ? item.disabled : '(disabled)';
+                return theme.style.disabled(`${line} ${disabledLabel}`);
+            }
+            const color = isActive ? theme.style.highlight : (x) => x;
+            const cursor = isActive ? theme.icon.cursor : ` `;
+            return color(`${cursor} ${line}`);
+        },
+        pageSize,
+        loop,
+    });
+    if (status === 'done') {
+        const answer = selectedChoice.short ??
+            selectedChoice.name ??
+            // TODO: Could we enforce that at the type level? Name should be defined for non-string values.
+            String(selectedChoice.value);
+        return `${prefix} ${message} ${theme.style.answer(answer)}`;
+    }
+    const choiceDescription = selectedChoice.description
+        ? `\n${theme.style.description(selectedChoice.description)}`
+        : ``;
+    return `${[prefix, message, helpTipTop].filter(Boolean).join(' ')}\n${page}${helpTipBottom}${choiceDescription}${ansiEscapes.cursorHide}`;
 });
 
 var ora$1 = {exports: {}};
@@ -10153,77 +10738,55 @@ var ora = /*@__PURE__*/getDefaultExportFromCjs(oraExports);
 const __filename = fileURLToPath(import.meta.url);
 dirname(__filename);
 const log = console.log;
-process$3.on('SIGINT', () => {
+process$4.on('SIGINT', () => {
     console.log('Received SIGINT. Gracefully shutting down...');
     // 这里可以添加你希望在退出之前执行的清理操作
     // 例如关闭数据库连接、保存状态等
-    process$3.exit(0); // 成功退出，使用 exit code 0 表示正常退出
+    process$4.exit(0); // 成功退出，使用 exit code 0 表示正常退出
 });
-process$3.on('uncaughtException', (err) => {
+process$4.on('uncaughtException', (err) => {
     console.error('exit code 1');
-    process$3.exit(1); // 使用非 0 值表示异常退出
+    process$4.exit(1); // 使用非 0 值表示异常退出
 });
 log(chalk$3.blue('安装步骤') + ' 开始');
 // program
 //   .option('-d, --debug', 'output extra debugging')
 //   .option('-s, --small', 'small pizza size')
 //   .option('-p, --pizza-type <type>', 'flavour of pizza');
+// 1. 文件名
 const dirName = await input({ message: '请输入文件名!', required: true });
-console.log('save dirName', dirName);
-const spinner = ora('Loading unicorns').start();
+// 2. 选择模板
+await select({
+    message: '请选择模板>',
+    choices: [
+        {
+            name: 'default(h5)',
+            value: 'default',
+            description: 'default template is h5',
+        },
+    ]
+});
+// 3. 开启loading
+const spinner = ora('downloading template...').start();
 // 仅限于公共仓库下载
 // download('https://gitlab.feeyo.com: http://gitlab.feeyo.com/cfrontend/frontend-template.git', dirName,{}, (err: any) => {
 //   console.log('download', err);
 // 	spinner.succeed('成功')
 // })
 const templateH5 = `git@gitlab.feeyo.com:cfrontend/frontend-template.git`;
-const targetPath = path.join(process$3.cwd(), dirName);
+const targetPath = path.join(process$4.cwd(), dirName);
+// 4. 克隆仓库
 execSync(`git clone ${templateH5} ${targetPath}`, {
     stdio: [0, 1, 2], // we need this so node will print the command output
 });
-process$3.chdir(targetPath);
-// 删除指定文件夹
+process$4.chdir(targetPath);
+//5. 删除.git目录
 const dirToDelete = path.join(targetPath, '.git');
 require$$0$8.rmSync(dirToDelete, { recursive: true, force: true }); // 递归删除文件夹及其内容
 spinner.succeed('模板下载成功!');
-// inquirer.prompt(questions)
-//   .then((answers) => {
-//     // Use user feedback for... whatever!!
-//     console.log('answers', answers);
-//     download('QingHeSite/browser-custom', 'browser',{}, (err: any) => {
-//       console.log('download', err);
-//     })
-//   })
-//   .catch((error) => {
-//     console.log('error', error);
-//     if (error.isTtyError) {
-//       // Prompt couldn't be rendered in the current environment
-//     } else {
-//       // Something else went wrong
-//     }
-//   });
-// program.command('create <name>').action(name => {
-//   // 获取一些项目信息
-//   inquirer.prompt([
-//     {
-//       name: 'author',
-//       message: '你的名字是：'
-//     }
-//   ]).then(res => {
-//     // 拿到信息参数
-//     console.log('信息参数', res);
-//     const { author, version, description } = res
-//     const beginTime = new Date().getTime()
-//     // download(`LeoJ340/webpack-template`, `./${name}`, err => {
-//     //   const time = (new Date().getTime() - beginTime) / 1000
-//     //   console.log(err || `create project finish in ${time}s`)
-//     // })
-//   })
-// });
 // program.parse();
 // const options = program.opts();
 // if (options.debug) console.log(options);
 // if (options.small) console.log('- small pizza size');
 // if (options.pizzaType) console.log(`- ${options.pizzaType}`);
-// console.log('脚手架运行!')
 //# sourceMappingURL=index.esm.js.map
