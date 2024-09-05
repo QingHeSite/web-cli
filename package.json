@@ -1,17 +1,18 @@
 {
-  "name": "devwt-web-cli",
-  "version": "1.0.1",
+  "name": "fy-temp",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "web": "./dist/index.esm.js"
+    "fy-temp": "./dist/index.esm.js"
   },
   "type": "module",
   "scripts": {
     "test": "node ./__tests__/vf-common.test.js",
     "build:dev": "cross-env NODE_ENV=development rollup  -c ./config/rollup.config.js",
     "build": "cross-env NODE_ENV=production rollup  -c ./config/rollup.config.js",
-    "start": "cross-env NODE_ENV=development rollup -w -c ./config/rollup.config.js"
+    "start": "cross-env NODE_ENV=development rollup -w -c ./config/rollup.config.js",
+    "prepublishOnly": "pnpm build"
   },
   "files": [
     "dist"
@@ -23,7 +24,6 @@
     "@rollup/plugin-json": "^6.1.0",
     "@types/commander": "^2.12.2",
     "@types/inquirer": "^9.0.7",
-    "chalk": "^4.1.2",
     "rollup": "^4.21.2"
   },
   "dependencies": {
@@ -37,7 +37,8 @@
     "download-git-repo": "^3.0.2",
     "electron": "^32.0.1",
     "inquirer": "^10.1.8",
-    "ora": "^5.4.1",
-    "rollup-plugin-typescript2": "^0.36.0"
+    "ora": "5.4.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "chalk": "^4.1.2"
   }
 }
