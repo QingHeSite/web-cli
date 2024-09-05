@@ -1,17 +1,18 @@
 {
-  "name": "fe-temp",
+  "name": "fy-temp",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "web": "./dist/index.esm.js"
+    "fy-temp": "./dist/index.esm.js"
   },
   "type": "module",
   "scripts": {
     "test": "node ./__tests__/vf-common.test.js",
     "build:dev": "cross-env NODE_ENV=development rollup  -c ./config/rollup.config.js",
     "build": "cross-env NODE_ENV=production rollup  -c ./config/rollup.config.js",
-    "start": "cross-env NODE_ENV=development rollup -w -c ./config/rollup.config.js"
+    "start": "cross-env NODE_ENV=development rollup -w -c ./config/rollup.config.js",
+    "prepublishOnly": "pnpm build"
   },
   "files": [
     "dist"

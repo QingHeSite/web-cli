@@ -15,23 +15,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const log = console.log;
-log(chalk.blue('start') + ' install' + chalk.red('!'));
-console.log(process.cwd());
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT. Gracefully shutting down...');
+
+  // 这里可以添加你希望在退出之前执行的清理操作
+  // 例如关闭数据库连接、保存状态等
+  process.exit(0); // 成功退出，使用 exit code 0 表示正常退出
+});
+process.on('uncaughtException', (err) => {
+  console.error('exit code 1');
+  process.exit(1); // 使用非 0 值表示异常退出
+});
 
 
-interface MyAnswers {
-  name: string;
-  language: string;
-}
+log(chalk.blue('安装步骤') + ' 开始');
 
-program
-  .option('-d, --debug', 'output extra debugging')
-  .option('-s, --small', 'small pizza size')
-  .option('-p, --pizza-type <type>', 'flavour of pizza');
+// program
+//   .option('-d, --debug', 'output extra debugging')
+//   .option('-s, --small', 'small pizza size')
+//   .option('-p, --pizza-type <type>', 'flavour of pizza');
 
-// program.version('0.0.2');
-
-const dirName = await input({ message: 'Enter your dirName', required: true });
+const dirName = await input({ message: '请输入文件名!', required: true });
 console.log('save dirName', dirName);
 const spinner = ora('Loading unicorns').start();
 
@@ -41,8 +46,10 @@ const spinner = ora('Loading unicorns').start();
 // 	spinner.succeed('成功')
 // })
 
+const templateH5 = `git@gitlab.feeyo.com:cfrontend/frontend-template.git`
+
 const targetPath = path.join(process.cwd(), dirName)
-  execSync(`git clone git@gitlab.feeyo.com:cfrontend/frontend-template.git ${targetPath}`, {
+  execSync(`git clone ${templateH5} ${targetPath}`, {
     stdio: [0, 1, 2], // we need this so node will print the command output
   })
 
