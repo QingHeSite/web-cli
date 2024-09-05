@@ -4,9 +4,19 @@ import download from 'download-git-repo'
 import { input } from '@inquirer/prompts';
 import ora from "ora"; //3.4.0 8.1.0
 import chalk from 'chalk'
+import { execSync }  from 'child_process';
+import path from "node:path"
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import process from 'process'
+import fs from 'fs'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const log = console.log;
-log(chalk.blue('Hello') + ' World' + chalk.red('!'));
+log(chalk.blue('start') + ' install' + chalk.red('!'));
+console.log(process.cwd());
 
 
 interface MyAnswers {
@@ -22,15 +32,27 @@ program
 // program.version('0.0.2');
 
 const dirName = await input({ message: 'Enter your dirName', required: true });
-console.log('dirName', dirName);
+console.log('save dirName', dirName);
 const spinner = ora('Loading unicorns').start();
 
-setTimeout(() => {
-	spinner.succeed('成功')
-}, 1000);
-// download('QingHeSite/browser-custom', dirName,{}, (err: any) => {
+// 仅限于公共仓库下载
+// download('https://gitlab.feeyo.com: http://gitlab.feeyo.com/cfrontend/frontend-template.git', dirName,{}, (err: any) => {
 //   console.log('download', err);
+// 	spinner.succeed('成功')
 // })
+
+const targetPath = path.join(process.cwd(), dirName)
+  execSync(`git clone git@gitlab.feeyo.com:cfrontend/frontend-template.git ${targetPath}`, {
+    stdio: [0, 1, 2], // we need this so node will print the command output
+  })
+
+  process.chdir(targetPath);
+  // 删除指定文件夹
+  const dirToDelete = path.join(targetPath, '.git');
+  fs.rmSync(dirToDelete, { recursive: true, force: true }); // 递归删除文件夹及其内容
+
+
+spinner.succeed('模板下载成功!')
 
 
 // inquirer.prompt(questions)
@@ -77,13 +99,13 @@ setTimeout(() => {
 
 
 
-program.parse();
+// program.parse();
 
-const options = program.opts();
+// const options = program.opts();
 
-if (options.debug) console.log(options);
-if (options.small) console.log('- small pizza size');
-if (options.pizzaType) console.log(`- ${options.pizzaType}`);
+// if (options.debug) console.log(options);
+// if (options.small) console.log('- small pizza size');
+// if (options.pizzaType) console.log(`- ${options.pizzaType}`);
 
 
 
