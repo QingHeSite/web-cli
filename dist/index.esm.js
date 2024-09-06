@@ -10762,7 +10762,7 @@ await select({
         {
             name: 'default(h5)',
             value: 'default',
-            description: 'default template is h5',
+            description: '',
         },
     ]
 });
@@ -10784,6 +10784,8 @@ process$4.chdir(targetPath);
 const dirToDelete = path.join(targetPath, '.git');
 require$$0$8.rmSync(dirToDelete, { recursive: true, force: true }); // 递归删除文件夹及其内容
 spinner.succeed('模板下载成功!');
+// 提示需要进入目录进行pnpm
+log(chalk$3.blue('cd ') + chalk$3.green(`./${dirName}`) + chalk$3.blue(' && pnpm install'));
 // program.parse();
 // const options = program.opts();
 // if (options.debug) console.log(options);

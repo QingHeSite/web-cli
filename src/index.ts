@@ -72,8 +72,8 @@ const spinner = ora('downloading template...').start();
   fs.rmSync(dirToDelete, { recursive: true, force: true }); // 递归删除文件夹及其内容
 
   spinner.succeed('模板下载成功!')
-
-  
+// 提示需要进入目录进行pnpm
+log(chalk.blue('cd ') + chalk.green(`./${dirName}`) + chalk.blue(' && pnpm install'));
 // program.parse();
 
 // const options = program.opts();
